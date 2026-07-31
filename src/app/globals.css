@@ -1,0 +1,41 @@
+@import "../styles/tokens.css";
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
+.dark {
+  --background: 14 14 16;
+  --foreground: 242 242 242;
+  --card: 29 29 32;
+  --card-foreground: 242 242 242;
+  --popover: 38 38 42;
+  --popover-foreground: 242 242 242;
+  --primary: 255 106 26;
+  --primary-foreground: 255 255 255;
+  --secondary: 38 38 42;
+  --secondary-foreground: 242 242 242;
+  --muted: 48 48 54;
+  --muted-foreground: 155 155 160;
+  --accent: 48 48 54;
+  --accent-foreground: 242 242 242;
+  --destructive: 239 68 68;
+  --border: 48 48 54;
+  --input: 48 48 54;
+  --ring: 255 106 26;
+}
+
+body {
+  background-color: var(--color-neutral);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
