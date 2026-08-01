@@ -4,19 +4,39 @@ import { X } from "lucide-react";
 const LINK_COLUMNS = [
   {
     title: "Product",
-    links: ["Features", "Integrations", "Enterprise", "Pricing"],
+    links: [
+      { label: "Features", href: "/features" },
+      { label: "Pricing", href: "/pricing" },
+      { label: "How it works", href: "/how-it-works" },
+      { label: "Contact", href: "/contact" },
+    ],
   },
   {
     title: "Company",
-    links: ["About", "Careers", "Contact", "Press"],
+    links: [
+      { label: "About", href: "#" },
+      { label: "Careers", href: "#" },
+      { label: "Contact", href: "/contact" },
+      { label: "Press", href: "#" },
+    ],
   },
   {
     title: "Resources",
-    links: ["Blog", "Help Center", "Templates", "Community"],
+    links: [
+      { label: "Blog", href: "#" },
+      { label: "Help Center", href: "#" },
+      { label: "Templates", href: "#" },
+      { label: "Community", href: "#" },
+    ],
   },
   {
     title: "Legal",
-    links: ["Privacy", "Terms", "Cookies", "Ethics"],
+    links: [
+      { label: "Privacy", href: "#" },
+      { label: "Terms", href: "#" },
+      { label: "Cookies", href: "#" },
+      { label: "Ethics", href: "#" },
+    ],
   },
 ];
 
@@ -66,12 +86,12 @@ export function MarketingFooter() {
               </h4>
               <ul className="space-y-4">
                 {column.links.map((link) => (
-                  <li key={link}>
+                  <li key={link.label}>
                     <Link
-                      href="#"
+                      href={link.href}
                       className="text-sm text-[var(--color-text-muted)] transition-colors duration-150 hover:text-[var(--color-text-primary)]"
                     >
-                      {link}
+                      {link.label}
                     </Link>
                   </li>
                 ))}

@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 const NAV_LINKS = [
   { label: "Features", href: "/features" },
   { label: "Pricing", href: "/pricing" },
-  { label: "How it works", href: "/#how-it-works" },
+  { label: "How it works", href: "/how-it-works" },
+  { label: "Contact", href: "/contact" },
 ];
 
 export function MarketingNav() {
