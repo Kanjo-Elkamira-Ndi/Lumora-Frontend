@@ -11,6 +11,7 @@ export const MOCK_ASSETS: Asset[] = [
     mimeType: 'video/quicktime',
     sizeBytes: 842_000_000,
     createdAt: '2026-07-18T10:00:00Z',
+    source: 'upload',
   },
   {
     id: 'ast_02',
@@ -22,6 +23,7 @@ export const MOCK_ASSETS: Asset[] = [
     mimeType: 'video/mp4',
     sizeBytes: 214_000_000,
     createdAt: '2026-07-16T14:22:00Z',
+    source: 'upload',
   },
   {
     id: 'ast_03',
@@ -33,6 +35,7 @@ export const MOCK_ASSETS: Asset[] = [
     mimeType: 'video/mp4',
     sizeBytes: 56_000_000,
     createdAt: '2026-07-12T09:45:00Z',
+    source: 'ai-generated',
   },
   {
     id: 'ast_04',
@@ -43,6 +46,7 @@ export const MOCK_ASSETS: Asset[] = [
     mimeType: 'audio/mpeg',
     sizeBytes: 14_400_000,
     createdAt: '2026-07-20T17:03:00Z',
+    source: 'upload',
   },
   {
     id: 'ast_05',
@@ -53,6 +57,7 @@ export const MOCK_ASSETS: Asset[] = [
     mimeType: 'audio/wav',
     sizeBytes: 7_500_000,
     createdAt: '2026-07-15T11:30:00Z',
+    source: 'ai-generated',
   },
   {
     id: 'ast_06',
@@ -63,6 +68,7 @@ export const MOCK_ASSETS: Asset[] = [
     mimeType: 'audio/mpeg',
     sizeBytes: 240_000,
     createdAt: '2026-07-05T08:10:00Z',
+    source: 'upload',
   },
   {
     id: 'ast_07',
@@ -73,6 +79,7 @@ export const MOCK_ASSETS: Asset[] = [
     mimeType: 'image/jpeg',
     sizeBytes: 3_200_000,
     createdAt: '2026-07-22T13:18:00Z',
+    source: 'ai-generated',
   },
   {
     id: 'ast_08',
@@ -83,5 +90,6 @@ export const MOCK_ASSETS: Asset[] = [
     mimeType: 'image/png',
     sizeBytes: 5_600_000,
     createdAt: '2026-07-02T10:55:00Z',
+    source: 'ai-generated',
   },
 ]

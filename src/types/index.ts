@@ -1,5 +1,5 @@
 export type { Project } from './project'
-export type { Asset, AssetKind } from './asset'
+export type { Asset, AssetKind, AssetSource } from './asset'
 export type {
   Timeline,
   Track,

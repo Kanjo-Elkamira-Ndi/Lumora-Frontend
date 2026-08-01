@@ -15,10 +15,12 @@ export function LayerChip({
   layer,
   containerWidth,
   totalDuration,
+  onShowProvenance,
 }: {
   layer: Layer;
   containerWidth: number;
   totalDuration: number;
+  onShowProvenance?: (layer: Layer) => void;
 }) {
   const selectLayer = useEditorStore((s) => s.selectLayer);
   const selectedLayerId = useEditorStore((s) => s.selectedLayerId);
@@ -31,6 +33,12 @@ export function LayerChip({
       type="button"
       aria-label={`Layer: ${layer.label}`}
       onClick={() => selectLayer(layer.id)}
+      onContextMenu={(e) => {
+        if (onShowProvenance) {
+          e.preventDefault();
+          onShowProvenance(layer);
+        }
+      }}
       className={cn(
         "absolute top-0 h-[var(--layer-height)] overflow-hidden rounded-sm border border-[var(--color-border)] bg-[var(--color-surface-3)] text-left transition-shadow",
         selected && "ring-1 ring-[#FF6A1A] ring-inset"

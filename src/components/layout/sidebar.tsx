@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils/cn";
 
 const NAV_ITEMS = [
   { label: "Projects", href: "/dashboard", icon: FolderOpen },
-  { label: "Asset Library", href: "/library", icon: Library },
+  { label: "Asset Library", href: "/assets", icon: Library },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 

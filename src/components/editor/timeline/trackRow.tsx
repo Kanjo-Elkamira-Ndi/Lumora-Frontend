@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Film, Music, Sparkles, Type, type LucideIcon } from "lucide-react";
 
-import type { Track } from "@/types";
+import type { Layer, Track } from "@/types";
 import { LayerChip } from "./layerChip";
 
 const TRACK_ICONS: Record<Track["type"], LucideIcon> = {
@@ -16,9 +16,11 @@ const TRACK_ICONS: Record<Track["type"], LucideIcon> = {
 export function TrackRow({
   track,
   totalDuration,
+  onShowProvenance,
 }: {
   track: Track;
   totalDuration: number;
+  onShowProvenance?: (layer: Layer) => void;
 }) {
   const contentRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -44,6 +46,7 @@ export function TrackRow({
             layer={layer}
             containerWidth={containerWidth}
             totalDuration={totalDuration}
+            onShowProvenance={onShowProvenance}
           />
         ))}
       </div>

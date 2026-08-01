@@ -1,5 +1,6 @@
 import { AssetLibraryPanel } from "./assets/assetLibraryPanel";
 import { EditorTopbar } from "./editorTopbar";
+import { ExportProgressCard } from "./export/exportProgressCard";
 import { LayerPropertiesPanel } from "./properties/layerPropertiesPanel";
 import { PreviewPanel } from "./previewPanel";
 import { TimelinePanel } from "./timelinePanel";
@@ -14,6 +15,7 @@ export function EditorShell() {
         <LayerPropertiesPanel />
       </div>
       <TimelinePanel />
+      <ExportProgressCard />
     </div>
   );
 }

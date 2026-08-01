@@ -1,15 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import { Redo2, Undo2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ExportModal } from "@/components/editor/export/exportModal";
 import { useAiUiStore } from "@/stores/aiUiStore";
 
 export function EditorTopbar() {
   const params = useParams<{ projectId?: string }>();
   const projectId = params?.projectId;
   const progressOpen = useAiUiStore((s) => s.progressOpen);
+  const setProgressOpen = useAiUiStore((s) => s.setProgressOpen);
+  const [exportOpen, setExportOpen] = useState(false);
   const displayName =
     projectId && !projectId.startsWith("mock-new-")
       ? projectId
@@ -60,7 +64,7 @@ export function EditorTopbar() {
         <div className="relative">
           <Button
             className="h-8 px-4 text-sm"
-            onClick={() => console.log("Export — mock")}
+            onClick={() => setExportOpen(true)}
           >
             Export
           </Button>
@@ -72,6 +76,12 @@ export function EditorTopbar() {
           )}
         </div>
       </div>
+
+      <ExportModal
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        onExport={() => setProgressOpen(true)}
+      />
     </header>
   );
 }
