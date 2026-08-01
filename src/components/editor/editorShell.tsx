@@ -1,6 +1,6 @@
-import { AssetLibraryPanel } from "./assetLibraryPanel";
+import { AssetLibraryPanel } from "./assets/assetLibraryPanel";
 import { EditorTopbar } from "./editorTopbar";
-import { LayerPropertiesPanel } from "./layerPropertiesPanel";
+import { LayerPropertiesPanel } from "./properties/layerPropertiesPanel";
 import { PreviewPanel } from "./previewPanel";
 import { TimelinePanel } from "./timelinePanel";
 
