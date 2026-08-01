@@ -4,10 +4,12 @@ import { useParams } from "next/navigation";
 import { Redo2, Undo2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useAiUiStore } from "@/stores/aiUiStore";
 
 export function EditorTopbar() {
   const params = useParams<{ projectId?: string }>();
   const projectId = params?.projectId;
+  const progressOpen = useAiUiStore((s) => s.progressOpen);
   const displayName =
     projectId && !projectId.startsWith("mock-new-")
       ? projectId
@@ -55,12 +57,20 @@ export function EditorTopbar() {
         <span className="hidden text-xs text-[var(--color-text-muted)]">
           Job status placeholder
         </span>
-        <Button
-          className="h-8 px-4 text-sm"
-          onClick={() => console.log("Export — mock")}
-        >
-          Export
-        </Button>
+        <div className="relative">
+          <Button
+            className="h-8 px-4 text-sm"
+            onClick={() => console.log("Export — mock")}
+          >
+            Export
+          </Button>
+          {progressOpen && (
+            <span className="absolute -right-1.5 -top-1.5 flex size-2.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--color-primary)] opacity-75" />
+              <span className="relative inline-flex size-2.5 rounded-full bg-[var(--color-primary)]" />
+            </span>
+          )}
+        </div>
       </div>
     </header>
   );

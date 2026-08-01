@@ -7,12 +7,13 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils/cn";
 import { useAssetStore } from "@/stores/assetStore";
 import type { AssetKind } from "@/types";
+import { AiAssistTab } from "@/components/editor/ai/aiAssistTab";
 
 const TABS = [
   { id: "media", label: "Media" },
   { id: "text", label: "Text" },
   { id: "audio", label: "Audio" },
-  { id: "ai", label: "AI Assist" },
+  { id: "ai-assist", label: "AI Assist" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -143,7 +144,7 @@ export function AssetLibraryPanel() {
 
       {activeTab === "text" && <EmptyTab label="Text overlays coming soon" />}
       {activeTab === "audio" && <EmptyTab label="Audio browser coming soon" />}
-      {activeTab === "ai" && <EmptyTab label="AI Assist coming soon" />}
+      {activeTab === "ai-assist" && <AiAssistTab />}
     </aside>
   );
 }
