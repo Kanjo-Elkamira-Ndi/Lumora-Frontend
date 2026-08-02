@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Sparkles, ZoomIn, ZoomOut } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,8 @@ import { useTimelineStore } from "@/stores/timelineStore";
 import { Playhead } from "./timeline/playhead";
 import { TimeRuler } from "./timeline/timeRuler";
 import { TrackRow } from "./timeline/trackRow";
-import type { Layer } from "@/types";
+import type { Layer, Timeline } from "@/types";
+import type { Asset } from "@/types/asset";
 
 const TOTAL_SECONDS = 30;
 const LABEL_WIDTH = 80;
@@ -28,6 +29,44 @@ const pxToSlider = (px: number) =>
     Math.log(MAX_PX_PER_SEC / MIN_PX_PER_SEC)) *
   100;
 
+function formatTime(seconds: number) {
+  const s = Math.max(0, Math.floor(seconds));
+  const m = Math.floor(s / 60);
+  const rem = s % 60;
+  return `${m}:${String(rem).padStart(2, "0")}`;
+}
+
+type DragState = {
+  asset: Pick<Asset, "id" | "kind" | "name" | "durationMs">;
+  trackId: string;
+  timeSec: number;
+};
+
+function parseAssetFromDrag(e: React.DragEvent): Pick<
+  Asset,
+  "id" | "kind" | "name" | "durationMs"
+> | null {
+  try {
+    const raw = e.dataTransfer.getData("application/json");
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data.assetId || !data.kind) return null;
+    return {
+      id: data.assetId,
+      kind: data.kind,
+      name: data.name ?? "Asset",
+      durationMs: data.durationMs,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function resolveDropTrackId(timeline: Timeline | null, kind: Asset["kind"]) {
+  const trackType = kind === "audio" ? "audio" : "video";
+  return timeline?.tracks.find((t) => t.type === trackType)?.id ?? null;
+}
+
 export function TimelinePanel() {
   const timeline = useTimelineStore((s) => s.timeline);
   const playheadPosition = useEditorStore((s) => s.playheadPosition);
@@ -38,6 +77,8 @@ export function TimelinePanel() {
   const [pxPerSec, setPxPerSec] = useState<number | null>(null);
   const [fitPxPerSec, setFitPxPerSec] = useState(20);
   const [manifestLayer, setManifestLayer] = useState<Layer | null>(null);
+  const [dragState, setDragState] = useState<DragState | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const timelineId = timeline?.id;
   const [fitZoomTimelineId, setFitZoomTimelineId] = useState<
@@ -84,6 +125,62 @@ export function TimelinePanel() {
 
   const hasLayers = tracks.some((track) => track.layers.length > 0);
   const zoomPercent = Math.round((activePxPerSec / fitPxPerSec) * 100);
+
+  useEffect(() => {
+    const clearDrag = () => setDragState(null);
+    window.addEventListener("lumora:drag-end", clearDrag);
+    return () => window.removeEventListener("lumora:drag-end", clearDrag);
+  }, []);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    const asset = parseAssetFromDrag(e);
+    if (!asset) return;
+    e.dataTransfer.dropEffect = "copy";
+
+    const scroller = scrollRef.current;
+    if (scroller) {
+      const r = scroller.getBoundingClientRect();
+      if (e.clientX > r.right - 40) scroller.scrollLeft += 24;
+      else if (e.clientX < r.left + 40) scroller.scrollLeft -= 24;
+    }
+
+    const contentRect = contentRef.current?.getBoundingClientRect();
+    const xInContent = e.clientX - (contentRect?.left ?? 0);
+    const timeSec = Math.max(0, (xInContent - LABEL_WIDTH) / activePxPerSec);
+    const trackId = resolveDropTrackId(timeline, asset.kind);
+    if (!trackId) return;
+
+    setDragState((prev) => {
+      const t = Math.round(timeSec * 10) / 10;
+      if (
+        prev &&
+        prev.asset.id === asset.id &&
+        prev.trackId === trackId &&
+        Math.abs(prev.timeSec - t) < 0.05
+      ) {
+        return prev;
+      }
+      return { asset, trackId, timeSec: t };
+    });
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const asset = parseAssetFromDrag(e);
+    setDragState(null);
+    if (!asset) return;
+    const contentRect = contentRef.current?.getBoundingClientRect();
+    const xInContent = e.clientX - (contentRect?.left ?? 0);
+    const timeSec = Math.max(0, (xInContent - LABEL_WIDTH) / activePxPerSec);
+    useTimelineStore.getState().addAssetLayer(asset, timeSec * 1000);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+      setDragState(null);
+    }
+  };
 
   return (
     <footer className="flex min-h-0 min-w-0 flex-col border-t border-[var(--color-border)] bg-[var(--color-surface-1)]">
@@ -139,8 +236,12 @@ export function TimelinePanel() {
       <div
         ref={scrollRef}
         className="relative min-h-0 flex-1 overflow-auto"
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        onDragLeave={handleDragLeave}
       >
         <div
+          ref={contentRef}
           className="relative min-w-full"
           style={{ width: LABEL_WIDTH + totalDuration * activePxPerSec }}
         >
@@ -169,9 +270,21 @@ export function TimelinePanel() {
                 key={track.id}
                 track={track}
                 pxPerSec={activePxPerSec}
+                dropTarget={dragState?.trackId === track.id}
                 onShowProvenance={(layer) => setManifestLayer(layer)}
               />
             ))
+          )}
+
+          {dragState && (
+            <div
+              className="pointer-events-none absolute inset-y-0 z-40 w-px bg-[var(--color-primary)]"
+              style={{ left: LABEL_WIDTH + dragState.timeSec * activePxPerSec }}
+            >
+              <span className="absolute -left-4 top-1 whitespace-nowrap rounded-sm bg-[var(--color-primary)] px-1.5 py-0.5 font-mono text-[10px] font-bold text-white">
+                {formatTime(dragState.timeSec)}
+              </span>
+            </div>
           )}
 
           <Playhead

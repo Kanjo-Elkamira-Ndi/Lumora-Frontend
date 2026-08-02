@@ -10,12 +10,17 @@ import {
   mapLayer,
 } from "@/lib/api/mappers";
 import type { Layer, Timeline } from "@/types";
+import type { Asset } from "@/types/asset";
 import type { LayerDto } from "@/lib/api/timeline";
 
 type TimelineState = {
   timeline: Timeline | null;
   setTimeline: (timeline: Timeline) => void;
   addLayer: (trackId: string, layer: Layer) => void;
+  addAssetLayer: (
+    asset: Pick<Asset, "id" | "name" | "kind" | "durationMs">,
+    startMs: number
+  ) => void;
   updateLayerOptimistic: (
     trackId: string,
     layerId: string,
@@ -84,6 +89,24 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
           ),
         });
       });
+  },
+  addAssetLayer: (asset, startMs) => {
+    const timeline = get().timeline;
+    if (!timeline) return;
+    const trackType = asset.kind === "audio" ? "audio" : "video";
+    const track = timeline.tracks.find((t) => t.type === trackType);
+    if (!track) return;
+    const start = Math.max(0, Math.round(startMs));
+    get().addLayer(track.id, {
+      id: `tmp_${Date.now()}`,
+      type: track.type,
+      label: asset.name,
+      source: "manual",
+      startMs: start,
+      durationMs: asset.durationMs ?? 10000,
+      assetId: asset.id,
+      props: { assetId: asset.id, start: start / 1000, name: asset.name },
+    });
   },
   updateLayerOptimistic: (trackId, layerId, patch) => {
     const timeline = get().timeline;

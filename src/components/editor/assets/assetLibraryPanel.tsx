@@ -88,31 +88,8 @@ export function AssetLibraryPanel() {
     asset.name.toLowerCase().includes(searchQuery.trim().toLowerCase())
   );
 
-  const resolveTrack = (asset: Asset) => {
-    const timeline = useTimelineStore.getState().timeline;
-    if (!timeline) return null;
-    const kind = asset.kind === "audio" ? "audio" : "video";
-    const track = timeline.tracks.find((t) => t.type === kind);
-    if (!track) {
-      toastError(`No ${kind} track available on this timeline`);
-      return null;
-    }
-    return track;
-  };
-
-  const addToTimeline = (asset: Asset, layerId: string) => {
-    const track = resolveTrack(asset);
-    if (!track) return;
-    useTimelineStore.getState().addLayer(track.id, {
-      id: layerId,
-      type: track.type,
-      label: asset.name,
-      source: "manual",
-      startMs: 0,
-      durationMs: asset.durationMs ?? 10000,
-      assetId: asset.id,
-      props: { assetId: asset.id, start: 0, name: asset.name },
-    });
+  const addToTimeline = (asset: Asset) => {
+    useTimelineStore.getState().addAssetLayer(asset, 0);
   };
 
   const handleImport = async (file: File) => {
@@ -218,14 +195,32 @@ export function AssetLibraryPanel() {
                     key={asset.id}
                     role="button"
                     tabIndex={0}
-                    onClick={() => addToTimeline(asset, `tmp_${Date.now()}`)}
+                    draggable
+                    onClick={() => addToTimeline(asset)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
-                        addToTimeline(asset, `tmp_${Date.now()}`);
+                        addToTimeline(asset);
                       }
                     }}
-                    className="cursor-pointer overflow-hidden rounded-lg bg-[#26262A] transition-colors duration-150 hover:bg-[#303036]"
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData(
+                        "application/json",
+                        JSON.stringify({
+                          assetId: asset.id,
+                          kind: asset.kind,
+                          name: asset.name,
+                          durationMs: asset.durationMs,
+                        })
+                      );
+                      e.dataTransfer.effectAllowed = "copy";
+                    }}
+                    onDragEnd={() => {
+                      window.dispatchEvent(
+                        new CustomEvent("lumora:drag-end")
+                      );
+                    }}
+                    className="cursor-grab overflow-hidden rounded-lg bg-[#26262A] transition-colors duration-150 hover:bg-[#303036] active:cursor-grabbing"
                   >
                     <div
                       className="flex aspect-video items-center justify-center"
