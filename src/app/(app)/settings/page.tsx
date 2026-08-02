@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import { useAuthStore } from "@/stores/authStore";
 import { cn } from "@/lib/utils/cn";
 import { toastSuccess } from "@/lib/utils/toast";
 
@@ -54,10 +55,19 @@ function SectionCard({
   );
 }
 
+function initialsFor(email?: string) {
+  if (!email) return "YO";
+  const head = email.split("@")[0] ?? "";
+  return (head.slice(0, 2) || email.slice(0, 2)).toUpperCase();
+}
+
 export default function SettingsPage() {
   const [tab, setTab] = useState("general");
   const [workspaceName, setWorkspaceName] = useState("Lumora Studio");
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const user = useAuthStore((s) => s.user);
+  const email = user?.email ?? "you@lumora.studio";
+  const initials = initialsFor(user?.email);
 
   return (
     <div className="px-8 pb-10 pt-8">
@@ -100,16 +110,18 @@ export default function SettingsPage() {
             >
               <div className="flex items-center gap-3">
                 <div className="flex size-9 items-center justify-center rounded-full bg-[var(--color-surface-2)]">
-                  <span className="text-xs font-medium text-white">AO</span>
+                  <span className="text-xs font-medium text-white">{initials}</span>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-white">you@lumora.studio</p>
+                  <p className="text-sm font-medium text-white">{email}</p>
                   <p className="text-xs text-[var(--color-text-muted)]">Owner</p>
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => console.log("Invite — mock")}
+                  onClick={() => {
+                    /* todo: backend has no invite endpoint yet */
+                  }}
                 >
                   Invite
                 </Button>
@@ -124,10 +136,10 @@ export default function SettingsPage() {
             >
               <div className="flex items-center gap-4">
                 <div className="flex size-16 items-center justify-center rounded-full bg-gradient-to-b from-[#FF6A1A] to-[#C14E0E]">
-                  <span className="text-lg font-semibold text-white">AO</span>
+                  <span className="text-lg font-semibold text-white">{initials}</span>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-white">you@lumora.studio</p>
+                  <p className="text-sm font-medium text-white">{email}</p>
                   <p className="text-xs text-[var(--color-text-muted)]">
                     Pro workspace member
                   </p>
@@ -135,7 +147,9 @@ export default function SettingsPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => console.log("Edit profile — mock")}
+                  onClick={() => {
+                    /* todo: no backend endpoint to update user profile */
+                  }}
                 >
                   Edit
                 </Button>
@@ -172,7 +186,9 @@ export default function SettingsPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => console.log("Change plan — mock")}
+                    onClick={() => {
+                      /* todo: no backend endpoint to change plan */
+                    }}
                   >
                     Change plan
                   </Button>
