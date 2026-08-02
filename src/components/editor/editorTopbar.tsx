@@ -6,18 +6,41 @@ import { Redo2, Undo2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ExportModal } from "@/components/editor/export/exportModal";
+import { createRenderJob } from "@/lib/api/jobs";
+import { toastError } from "@/lib/utils/toast";
 import { useAiUiStore } from "@/stores/aiUiStore";
+import { useEditorStore } from "@/stores/editorStore";
 
 export function EditorTopbar() {
   const params = useParams<{ projectId?: string }>();
   const projectId = params?.projectId;
   const progressOpen = useAiUiStore((s) => s.progressOpen);
   const setProgressOpen = useAiUiStore((s) => s.setProgressOpen);
+  const setRenderJobId = useAiUiStore((s) => s.setRenderJobId);
+  const projectName = useEditorStore((s) => s.projectName);
   const [exportOpen, setExportOpen] = useState(false);
+
+  const handleExport = async () => {
+    if (!projectId) {
+      toastError("No project selected");
+      return;
+    }
+    try {
+      const job = await createRenderJob(projectId, "mp4");
+      setRenderJobId(job.id);
+      setProgressOpen(true);
+    } catch (error) {
+      toastError(
+        error instanceof Error ? error.message : "Failed to start render"
+      );
+    }
+  };
   const displayName =
-    projectId && !projectId.startsWith("mock-new-")
-      ? projectId
-      : "Untitled Project";
+    projectName && projectName.length > 0
+      ? projectName
+      : projectId && !projectId.startsWith("mock-new-")
+        ? projectId
+        : "Untitled Project";
 
   return (
     <header className="flex items-center gap-4 border-b border-[var(--color-border)] bg-[var(--color-surface-1)] px-4">
@@ -38,7 +61,9 @@ export function EditorTopbar() {
           size="default"
           className="size-8 p-0"
           aria-label="Undo"
-          onClick={() => console.log("Undo — mock")}
+          onClick={() => {
+            /* todo: undo/redo is UI-only, no backend concept */
+          }}
         >
           <Undo2 size={18} />
         </Button>
@@ -47,7 +72,9 @@ export function EditorTopbar() {
           size="default"
           className="size-8 p-0"
           aria-label="Redo"
-          onClick={() => console.log("Redo — mock")}
+          onClick={() => {
+            /* todo: undo/redo is UI-only, no backend concept */
+          }}
         >
           <Redo2 size={18} />
         </Button>
@@ -80,7 +107,7 @@ export function EditorTopbar() {
       <ExportModal
         open={exportOpen}
         onOpenChange={setExportOpen}
-        onExport={() => setProgressOpen(true)}
+        onExport={handleExport}
       />
     </header>
   );

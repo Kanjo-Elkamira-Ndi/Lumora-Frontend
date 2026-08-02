@@ -82,7 +82,9 @@ export function PreviewPanel() {
         <button
           type="button"
           aria-label="Volume"
-          onClick={() => console.log("Volume — mock")}
+          onClick={() => {
+            /* todo: playback volume is UI-only */
+          }}
           className="shrink-0 text-[var(--color-text-muted)] transition-colors hover:text-white"
         >
           <Volume2 size={18} />
@@ -91,7 +93,9 @@ export function PreviewPanel() {
         <button
           type="button"
           aria-label="Fullscreen"
-          onClick={() => console.log("Fullscreen — mock")}
+          onClick={() => {
+            /* todo: use requestFullscreen() on the preview container */
+          }}
           className="shrink-0 text-[var(--color-text-muted)] transition-colors hover:text-white"
         >
           <Maximize2 size={18} />

@@ -19,6 +19,7 @@ export function TimelinePanel() {
   const timeline = useTimelineStore((s) => s.timeline);
   const playheadPosition = useEditorStore((s) => s.playheadPosition);
   const tracks = timeline?.tracks ?? [];
+  const totalDuration = timeline ? timeline.durationMs / 1000 : TOTAL_SECONDS;
   const contentRef = useRef<HTMLDivElement>(null);
   const spacerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -42,7 +43,9 @@ export function TimelinePanel() {
           size="default"
           className="size-8 p-0"
           aria-label="Zoom out"
-          onClick={() => console.log("Zoom out — mock")}
+          onClick={() => {
+            /* todo: timeline zoom is UI-only */
+          }}
         >
           <ZoomOut size={18} />
         </Button>
@@ -51,7 +54,9 @@ export function TimelinePanel() {
           size="default"
           className="size-8 p-0"
           aria-label="Zoom in"
-          onClick={() => console.log("Zoom in — mock")}
+          onClick={() => {
+            /* todo: timeline zoom is UI-only */
+          }}
         >
           <ZoomIn size={18} />
         </Button>
@@ -61,7 +66,7 @@ export function TimelinePanel() {
         <div className="flex shrink-0">
           <div ref={spacerRef} className="w-20 shrink-0 border-r border-[var(--color-border)] bg-[var(--color-surface-2)]" />
           <div className="min-w-0 flex-1 overflow-hidden">
-            <TimeRuler totalDuration={TOTAL_SECONDS} />
+            <TimeRuler totalDuration={totalDuration} />
           </div>
         </div>
         <div ref={contentRef} className="relative min-h-0 flex-1">
@@ -72,14 +77,16 @@ export function TimelinePanel() {
                 title="Nothing on your timeline yet"
                 description="Add clips, voiceover, and AI-generation from the AI Assist tab to get started."
                 actionLabel="Open AI Assist"
-                onAction={() => console.log("Open AI Assist — mock")}
+                onAction={() => {
+                  window.dispatchEvent(new CustomEvent("lumora:open-ai-assist"));
+                }}
               />
             ) : (
               tracks.map((track) => (
                 <TrackRow
                   key={track.id}
                   track={track}
-                  totalDuration={TOTAL_SECONDS}
+                  totalDuration={totalDuration}
                   onShowProvenance={(layer) => setManifestLayer(layer)}
                 />
               ))
@@ -89,12 +96,13 @@ export function TimelinePanel() {
             containerWidth={containerWidth}
             labelWidth={labelWidth}
             position={playheadPosition}
-            totalDuration={TOTAL_SECONDS}
+            totalDuration={totalDuration}
           />
         </div>
       </div>
 
       <AssetManifestDrawer
+        key={manifestLayer?.id ?? "none"}
         open={manifestLayer !== null}
         onOpenChange={(open) => {
           if (!open) setManifestLayer(null);

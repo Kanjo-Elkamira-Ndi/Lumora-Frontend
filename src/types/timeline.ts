@@ -10,7 +10,7 @@ export type Layer = {
   startMs: number
   durationMs: number
   assetId?: string
-  props?: Record<string, string | number | boolean>
+  props?: Record<string, unknown>
 }
 
 export type Track = {

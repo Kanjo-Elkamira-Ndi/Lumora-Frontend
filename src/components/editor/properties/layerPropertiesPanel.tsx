@@ -63,6 +63,7 @@ function NumberField({
       <FieldLabel>{label}</FieldLabel>
       <input
         type="number"
+        aria-label={label}
         defaultValue={defaultValue}
         onChange={(e) => onUpdate(label.toLowerCase().replace(/\s+/g, ""), e.target.value)}
         className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2 py-1.5 text-xs text-white focus:border-[var(--color-primary)] focus:outline-none"
@@ -87,8 +88,32 @@ export function LayerPropertiesPanel() {
     }
   }
 
-  const logUpdate = (layerId: string, field: string, value: string | number) =>
-    console.log("Update — mock", layerId, field, value);
+  const updateField = (field: string, value: string | number) => {
+    if (!selected) return;
+    const layer = selected.layer;
+    const num = typeof value === "number" ? value : Number(value);
+    const patch: Partial<Layer> = {};
+    switch (field) {
+      case "start":
+        patch.startMs = Math.round(num * 1000);
+        break;
+      case "duration":
+        patch.durationMs = Math.round(num * 1000);
+        break;
+      case "fontSize":
+        patch.props = { ...layer.props, size: num };
+        break;
+      default:
+        patch.props = { ...layer.props, [field]: value };
+        break;
+    }
+    useTimelineStore
+      .getState()
+      .updateLayerOptimistic(selected.track.id, layer.id, patch);
+  };
+
+  const onUpdate = (field: string, value: string | number) =>
+    updateField(field, value);
 
   return (
     <aside className="flex h-full flex-col overflow-y-auto bg-[var(--color-surface-1)]">
@@ -122,12 +147,12 @@ export function LayerPropertiesPanel() {
               <NumberField
                 label="Start"
                 defaultValue={selected.layer.startMs / 1000}
-                onUpdate={(field, value) => logUpdate(selected.layer.id, field, value)}
+                onUpdate={(field, value) => onUpdate(field, value)}
               />
               <NumberField
                 label="Duration"
                 defaultValue={selected.layer.durationMs / 1000}
-                onUpdate={(field, value) => logUpdate(selected.layer.id, field, value)}
+                onUpdate={(field, value) => onUpdate(field, value)}
               />
             </div>
           </div>
@@ -140,17 +165,19 @@ export function LayerPropertiesPanel() {
                 <div>
                   <FieldLabel>Opacity</FieldLabel>
                   <Slider
-                    defaultValue={[100]}
+                    aria-label="Opacity"
+                    defaultValue={[Number(selected.layer.props?.opacity ?? 100)]}
                     min={0}
                     max={100}
-                    onValueChange={(v) => logUpdate(selected.layer.id, "opacity", v[0])}
+                    onValueChange={(v) => onUpdate("opacity", v[0])}
                   />
                 </div>
                 <div>
                   <FieldLabel>Playback Rate</FieldLabel>
                   <Select
-                    defaultValue="1x"
-                    onValueChange={(v) => logUpdate(selected.layer.id, "playbackRate", v)}
+                    aria-label="Playback Rate"
+                    defaultValue={String(selected.layer.props?.playbackRate ?? "1x")}
+                    onValueChange={(v) => onUpdate("playbackRate", v)}
                   >
                     <SelectTrigger className="h-8 px-2 text-xs">
                       <SelectValue />
@@ -171,10 +198,11 @@ export function LayerPropertiesPanel() {
               <div>
                 <FieldLabel>Volume</FieldLabel>
                 <Slider
-                  defaultValue={[80]}
+                  aria-label="Volume"
+                  defaultValue={[Number(selected.layer.props?.volume ?? 80)]}
                   min={0}
                   max={100}
-                  onValueChange={(v) => logUpdate(selected.layer.id, "volume", v[0])}
+                  onValueChange={(v) => onUpdate("volume", v[0])}
                 />
               </div>
             )}
@@ -186,15 +214,16 @@ export function LayerPropertiesPanel() {
                   <Textarea
                     rows={3}
                     defaultValue={String(selected.layer.props?.content ?? "")}
-                    onChange={(e) => logUpdate(selected.layer.id, "content", e.target.value)}
+                    onChange={(e) => onUpdate("content", e.target.value)}
                   />
                 </div>
                 <div>
                   <FieldLabel>Font Size</FieldLabel>
                   <input
                     type="number"
+                    aria-label="Font Size"
                     defaultValue={Number(selected.layer.props?.size ?? 28)}
-                    onChange={(e) => logUpdate(selected.layer.id, "fontSize", e.target.value)}
+                    onChange={(e) => onUpdate("fontSize", e.target.value)}
                     className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2 py-1.5 text-xs text-white focus:border-[var(--color-primary)] focus:outline-none"
                   />
                 </div>
@@ -202,12 +231,12 @@ export function LayerPropertiesPanel() {
                   <NumberField
                     label="Position X"
                     defaultValue={960}
-                    onUpdate={(field, value) => logUpdate(selected.layer.id, field, value)}
+                    onUpdate={(field, value) => onUpdate(field, value)}
                   />
                   <NumberField
                     label="Position Y"
                     defaultValue={540}
-                    onUpdate={(field, value) => logUpdate(selected.layer.id, field, value)}
+                    onUpdate={(field, value) => onUpdate(field, value)}
                   />
                 </div>
               </div>
@@ -224,10 +253,11 @@ export function LayerPropertiesPanel() {
                 <div>
                   <FieldLabel>Intensity</FieldLabel>
                   <Slider
-                    defaultValue={[50]}
+                    aria-label="Intensity"
+                    defaultValue={[Number(selected.layer.props?.intensity ?? 50)]}
                     min={0}
                     max={100}
-                    onValueChange={(v) => logUpdate(selected.layer.id, "intensity", v[0])}
+                    onValueChange={(v) => onUpdate("intensity", v[0])}
                   />
                 </div>
               </div>

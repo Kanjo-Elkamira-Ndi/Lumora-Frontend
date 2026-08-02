@@ -33,7 +33,7 @@ export function ProjectCard({ project }: { project: Project }) {
 
   return (
     <Link
-      href={`/editor/mock-${project.id}`}
+      href={`/editor/${project.id}`}
       className="group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] transition-colors duration-200 hover:border-[var(--color-primary)]"
     >
       <div className="relative aspect-video overflow-hidden rounded-t-xl bg-[var(--color-surface-3)]">

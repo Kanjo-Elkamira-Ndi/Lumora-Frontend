@@ -2,10 +2,12 @@ import { create } from "zustand";
 
 type EditorState = {
   projectId: string | null;
+  projectName: string | null;
   selectedLayerId: string | null;
   playheadPosition: number;
   draggingLayerId: string | null;
   setProject: (projectId: string) => void;
+  setProjectName: (projectName: string) => void;
   selectLayer: (layerId: string | null) => void;
   setPlayheadPosition: (position: number | ((prev: number) => number)) => void;
   setDraggingLayer: (layerId: string | null) => void;
@@ -13,10 +15,12 @@ type EditorState = {
 
 export const useEditorStore = create<EditorState>((set) => ({
   projectId: null,
+  projectName: null,
   selectedLayerId: null,
   playheadPosition: 0,
   draggingLayerId: null,
   setProject: (projectId) => set({ projectId }),
+  setProjectName: (projectName) => set({ projectName }),
   selectLayer: (selectedLayerId) => set({ selectedLayerId }),
   setPlayheadPosition: (position) =>
     set((state) => ({

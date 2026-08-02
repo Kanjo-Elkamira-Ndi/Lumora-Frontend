@@ -7,6 +7,9 @@ import { CloudUpload, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { createProject as createProjectApi } from "@/lib/api/projects";
+import { cn } from "@/lib/utils/cn";
+import { toastError } from "@/lib/utils/toast";
 import {
   Select,
   SelectContent,
@@ -14,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils/cn";
 
 const ASPECT_RATIOS = [
   { value: "16:9", label: "16:9 (Cinematic/Desktop)" },
@@ -48,10 +50,25 @@ export function NewProjectModal({
   const [name, setName] = useState("");
   const [ratio, setRatio] = useState("16:9");
   const [startingPoint, setStartingPoint] = useState("blank");
+  const [creating, setCreating] = useState(false);
 
-  const createProject = () => {
-    onOpenChange(false);
-    router.push(`/editor/mock-new-${Date.now()}`);
+  const createProject = async () => {
+    const projectName = name.trim();
+    if (!projectName) {
+      toastError("Enter a project name.");
+      return;
+    }
+    setCreating(true);
+    try {
+      const result = await createProjectApi(projectName);
+      onOpenChange(false);
+      router.push(`/editor/${result.project.id}`);
+    } catch (error) {
+      toastError(
+        error instanceof Error ? error.message : "Failed to create project."
+      );
+      setCreating(false);
+    }
   };
 
   return (
@@ -138,8 +155,8 @@ export function NewProjectModal({
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={createProject} className="px-8">
-            Create Project
+          <Button onClick={() => void createProject()} className="px-8" disabled={creating}>
+            {creating ? "Creating..." : "Create Project"}
           </Button>
         </div>
       </DialogContent>
