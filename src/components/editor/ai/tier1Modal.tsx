@@ -17,10 +17,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { createTier1Job } from "@/lib/api/jobs";
+import { toastError } from "@/lib/utils/toast";
+import { useAiUiStore } from "@/stores/aiUiStore";
+import { useEditorStore } from "@/stores/editorStore";
 
 import { AgenticProgressDrawer } from "./agenticProgressDrawer";
 
 const VOICES = ["Aria (natural)", "Marcus (deep)", "Zoe (energetic)"];
+
+const VOICE_TO_BACKEND: Record<string, string> = {
+  "Aria (natural)": "Ashley",
+  "Marcus (deep)": "Ronald",
+  "Zoe (energetic)": "Ashley",
+};
 
 const PROVIDERS = [
   "Auto (best available)",
@@ -37,6 +47,38 @@ export function Tier1Modal({
   onOpenChange: (open: boolean) => void;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [script, setScript] = useState("");
+  const [voice, setVoice] = useState(VOICES[0]);
+  const [submitting, setSubmitting] = useState(false);
+  const projectId = useEditorStore((s) => s.projectId);
+  const setActiveJob = useAiUiStore((s) => s.setActiveJob);
+
+  const handleGenerate = async () => {
+    if (!projectId) {
+      toastError("No project selected");
+      return;
+    }
+    if (!script.trim()) {
+      toastError("Enter a script first");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const { jobId } = await createTier1Job(projectId, "voiceover", {
+        script,
+        voiceConfig: { voiceId: VOICE_TO_BACKEND[voice] ?? "Ashley" },
+      });
+      setActiveJob({ jobId, kind: "voiceover" });
+      setSubmitting(false);
+      onOpenChange(false);
+      setDrawerOpen(true);
+    } catch (error) {
+      setSubmitting(false);
+      toastError(
+        error instanceof Error ? error.message : "Failed to start generation"
+      );
+    }
+  };
 
   return (
     <>
@@ -56,6 +98,8 @@ export function Tier1Modal({
               <Textarea
                 rows={6}
                 placeholder="Type the script for your voiceover..."
+                value={script}
+                onChange={(event) => setScript(event.target.value)}
                 className="border-[var(--color-border)] bg-[var(--color-surface-2)]"
               />
             </div>
@@ -65,14 +109,14 @@ export function Tier1Modal({
                 <label className="mb-1.5 block text-sm text-[var(--color-text-muted)]">
                   Voice
                 </label>
-                <Select defaultValue="Aria (natural)">
+                <Select value={voice} onValueChange={setVoice}>
                   <SelectTrigger className="bg-[var(--color-surface-2)]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {VOICES.map((voice) => (
-                      <SelectItem key={voice} value={voice}>
-                        {voice}
+                    {VOICES.map((v) => (
+                      <SelectItem key={v} value={v}>
+                        {v}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -112,14 +156,8 @@ export function Tier1Modal({
             >
               Cancel
             </Button>
-            <Button
-              onClick={() => {
-                onOpenChange(false);
-                setDrawerOpen(true);
-                console.log("Tier 1 generate — mock");
-              }}
-            >
-              Generate
+            <Button onClick={handleGenerate} disabled={submitting}>
+              {submitting ? "Starting…" : "Generate"}
             </Button>
           </div>
         </DialogContent>

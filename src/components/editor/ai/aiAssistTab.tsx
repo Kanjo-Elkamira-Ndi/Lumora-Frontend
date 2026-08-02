@@ -26,28 +26,36 @@ const SUGGESTIONS: {
     icon: Captions,
     title: "Auto-generate captions",
     description: "Transcribe your video and add word-level caption layers.",
-    onSuggest: () => console.log("Tier 0 captions — mock"),
+    onSuggest: () => {
+      /* todo: POST /api/jobs {tier:0, jobType:"caption"} then apply result */
+    },
   },
   {
     id: "transitions",
     icon: Shuffle,
     title: "Suggest transitions",
     description: "AI picks the right cut for the mood of each scene.",
-    onSuggest: () => console.log("Tier 0 transitions — mock"),
+    onSuggest: () => {
+      /* todo: POST /api/jobs {tier:0, jobType:"transition"} then apply result */
+    },
   },
   {
     id: "cut",
     icon: Scissors,
     title: "Smart cut points",
     description: "Find the best 30-second highlight from your footage.",
-    onSuggest: () => console.log("Tier 0 smart cut — mock"),
+    onSuggest: () => {
+      /* todo: POST /api/jobs {tier:0, jobType:"cut_points"} then apply result */
+    },
   },
   {
     id: "title",
     icon: Type,
     title: "Generate title card",
     description: "AI writes and styles an opening title layer.",
-    onSuggest: () => console.log("Tier 0 title card — mock"),
+    onSuggest: () => {
+      /* todo: POST /api/jobs {tier:0, jobType:"motion_spec"} then apply result */
+    },
   },
 ];
 
@@ -114,14 +122,18 @@ function CaptionResults({ onClose }: { onClose: () => void }) {
             <div className="flex shrink-0 gap-1">
               <button
                 type="button"
-                onClick={() => console.log("Accept caption — mock")}
+                onClick={() => {
+                  /* todo: apply caption as a text layer via timelineStore.addLayer */
+                }}
                 className="h-6 cursor-pointer rounded bg-[var(--color-primary)] px-2 text-[10px] font-bold text-white transition-all hover:brightness-110 active:scale-[0.98]"
               >
                 Accept
               </button>
               <button
                 type="button"
-                onClick={() => console.log("Discard — mock")}
+                onClick={() => {
+                  /* todo: nothing to discard until results are real */
+                }}
                 className="h-6 cursor-pointer rounded px-2 text-[10px] text-[var(--color-text-muted)] transition-colors hover:text-white"
               >
                 Discard
