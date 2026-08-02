@@ -4,11 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CheckCircle, Eye, EyeOff, Globe } from "lucide-react";
-import { toast } from "sonner";
 
 import { AuthLeftPanel } from "@/components/auth/authLeftPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { getMe, register } from "@/lib/api/auth";
+import { toastError, toastSuccess } from "@/lib/utils/toast";
+import { useAuthStore } from "@/stores/authStore";
 
 const HIGHLIGHTS = [
   "Tier 0 AI suggestions — captions, cuts, transitions — always free",
@@ -20,10 +22,16 @@ function PasswordInput({
   id,
   label,
   autoComplete,
+  value,
+  onChange,
+  disabled,
 }: {
   id: string;
   label: string;
   autoComplete: string;
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
 }) {
   const [visible, setVisible] = useState(false);
 
@@ -42,6 +50,9 @@ function PasswordInput({
           autoComplete={autoComplete}
           placeholder="••••••••"
           className="pr-10"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
         />
         <button
           type="button"
@@ -63,11 +74,40 @@ function PasswordInput({
 
 export default function SignupPage() {
   const router = useRouter();
+  const setUser = useAuthStore((state) => state.setUser);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  function handleSignup() {
-    console.log("Signup — mock");
-    toast.success("Account created! Please log in.");
-    router.push("/login");
+  async function handleSignup() {
+    if (!email || !password) {
+      toastError("Enter your email and a password.");
+      return;
+    }
+    if (password.length < 8) {
+      toastError("Password must be at least 8 characters.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      toastError("Passwords do not match.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await register(email, password);
+      const me = await getMe();
+      setUser({ id: me.id, email: me.email, name });
+      toastSuccess("Account created!");
+      router.push("/dashboard");
+    } catch (error) {
+      toastError(
+        error instanceof Error ? error.message : "Unable to create account."
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   const highlights = (
@@ -107,7 +147,9 @@ export default function SignupPage() {
 
           <button
             type="button"
-            onClick={() => console.log("Google SSO — mock")}
+            onClick={() => {
+              /* todo: no Google OAuth provider configured on the backend */
+            }}
             className="mt-8 flex h-11 w-full items-center justify-center gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] text-white transition-colors duration-150 hover:bg-[var(--color-surface-3)]"
           >
             <Globe
@@ -125,7 +167,13 @@ export default function SignupPage() {
             <hr className="flex-1 border-[var(--color-border)]" />
           </div>
 
-          <div className="mt-6 flex flex-col gap-4">
+          <form
+            className="mt-6 flex flex-col gap-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void handleSignup();
+            }}
+          >
             <div>
               <label
                 htmlFor="signup-name"
@@ -138,6 +186,9 @@ export default function SignupPage() {
                 type="text"
                 autoComplete="name"
                 placeholder="Ada Lovelace"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                disabled={submitting}
               />
             </div>
             <div>
@@ -152,26 +203,36 @@ export default function SignupPage() {
                 type="email"
                 autoComplete="email"
                 placeholder="name@company.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={submitting}
               />
             </div>
             <PasswordInput
               id="signup-password"
               label="Password"
               autoComplete="new-password"
+              value={password}
+              onChange={setPassword}
+              disabled={submitting}
             />
             <PasswordInput
               id="signup-confirm-password"
               label="Confirm password"
               autoComplete="new-password"
+              value={confirmPassword}
+              onChange={setConfirmPassword}
+              disabled={submitting}
             />
-          </div>
+          </form>
 
           <Button
-            onClick={handleSignup}
+            onClick={() => void handleSignup()}
             size="lg"
             className="mt-6 h-11 w-full"
+            disabled={submitting}
           >
-            Create account
+            {submitting ? "Creating account..." : "Create account"}
           </Button>
 
           <p className="mt-4 text-center text-sm text-[var(--color-text-muted)]">

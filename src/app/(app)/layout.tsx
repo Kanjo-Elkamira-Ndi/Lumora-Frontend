@@ -1,9 +1,12 @@
 import type { ReactNode } from "react";
 
 import { AppShell } from "@/components/layout/appShell";
-
-// TODO: redirect to /login if not authenticated.
+import { SessionCheck } from "@/components/layout/sessionCheck";
 
 export default function AppLayout({ children }: { children: ReactNode }) {
-  return <AppShell>{children}</AppShell>;
+  return (
+    <AppShell>
+      <SessionCheck>{children}</SessionCheck>
+    </AppShell>
+  );
 }

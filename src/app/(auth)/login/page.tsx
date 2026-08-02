@@ -2,11 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Globe, User } from "lucide-react";
 
 import { AuthLeftPanel } from "@/components/auth/authLeftPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { getMe, login } from "@/lib/api/auth";
+import { toastError } from "@/lib/utils/toast";
 import { useAuthStore } from "@/stores/authStore";
 
 const TESTIMONIAL = (
@@ -32,14 +35,28 @@ const TESTIMONIAL = (
 export default function LoginPage() {
   const router = useRouter();
   const setUser = useAuthStore((state) => state.setUser);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  function handleLogin() {
-    setUser({
-      id: "mock-1",
-      name: "Kanjo",
-      email: "kanjoelkamira@gmail.com",
-    });
-    router.push("/dashboard");
+  async function handleLogin() {
+    if (!email || !password) {
+      toastError("Enter your email and password.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await login(email, password);
+      const me = await getMe();
+      setUser({ id: me.id, email: me.email, name: "" });
+      router.push("/dashboard");
+    } catch (error) {
+      toastError(
+        error instanceof Error ? error.message : "Unable to log in."
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -62,7 +79,9 @@ export default function LoginPage() {
 
           <button
             type="button"
-            onClick={() => console.log("Google SSO — mock")}
+            onClick={() => {
+              /* todo: no Google OAuth provider configured on the backend */
+            }}
             className="mt-8 flex h-11 w-full items-center justify-center gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] text-white transition-colors duration-150 hover:bg-[var(--color-surface-3)]"
           >
             <Globe
@@ -80,7 +99,13 @@ export default function LoginPage() {
             <hr className="flex-1 border-[var(--color-border)]" />
           </div>
 
-          <div className="mt-6 flex flex-col gap-4">
+          <form
+            className="mt-6 flex flex-col gap-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void handleLogin();
+            }}
+          >
             <div>
               <label
                 htmlFor="login-email"
@@ -93,6 +118,9 @@ export default function LoginPage() {
                 type="email"
                 autoComplete="email"
                 placeholder="name@company.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={submitting}
               />
             </div>
             <div>
@@ -107,6 +135,9 @@ export default function LoginPage() {
                 type="password"
                 autoComplete="current-password"
                 placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={submitting}
               />
               <div className="mt-1.5 text-right">
                 <Link
@@ -117,14 +148,15 @@ export default function LoginPage() {
                 </Link>
               </div>
             </div>
-          </div>
+          </form>
 
           <Button
-            onClick={handleLogin}
+            onClick={() => void handleLogin()}
             size="lg"
             className="mt-6 h-11 w-full"
+            disabled={submitting}
           >
-            Log in
+            {submitting ? "Logging in..." : "Log in"}
           </Button>
 
           <p className="mt-4 text-center text-sm text-[var(--color-text-muted)]">

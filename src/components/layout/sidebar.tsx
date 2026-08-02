@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { FolderOpen, Library, Settings, User } from "lucide-react";
 
 import { cn } from "@/lib/utils/cn";
+import { useAuthStore } from "@/stores/authStore";
 
 const NAV_ITEMS = [
   { label: "Projects", href: "/dashboard", icon: FolderOpen },
@@ -14,6 +15,9 @@ const NAV_ITEMS = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const user = useAuthStore((state) => state.user);
+
+  const displayName = user?.name?.trim() || user?.email?.split("@")[0] || "Lumora user";
 
   return (
     <aside className="sticky top-0 z-40 hidden h-screen w-[240px] shrink-0 flex-col border-r border-[var(--color-border)] bg-[var(--color-surface-1)] md:flex">
@@ -64,10 +68,10 @@ export function Sidebar() {
           </div>
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-[var(--color-text-primary)]">
-              Kanjo Ndi
+              {displayName}
             </p>
             <p className="truncate text-xs text-[var(--color-text-muted)]">
-              kanjoelkamira@gmail.com
+              {user?.email ?? ""}
             </p>
           </div>
         </div>
