@@ -15,8 +15,9 @@ FastAPI backend at `~/Projects/Lumora` (`:8000`) · Next.js frontend at `~/Proje
 | Part 6 — AI generation + jobs + WS | ✅ **Done** (CDP-verified: real voiceover job → WS running → completed → Accept creates audio layer) |
 | Part 7 — Export / render | ✅ **Done** (CDP-verified: real render job → running → complete/failed states; completed-path UI verified via simulated terminal transition because B2 is unconfigured) |
 | Part 8 — Settings + polish | ✅ **Done** (CDP-verified: settings shows real user email via `/api/auth/me`-backed authStore; layer Properties edits → real `PATCH /api/tracks/{trackId}/layers/{id}` round-trip, `params.size` 28→44 persisted and reflected in UI; all `console.log("… — mock")` stubs replaced with real calls or documented `todo` comments) |
+| Pass 9 — Real assets → B2 → playable preview | ✅ **Done** (CDP-verified: tracks created at project creation; upload through the UI persists to B2 with real `duration`; editor preview plays real media from a B2 presigned URL — `<video>` element, playhead synced via `timeupdate`, persists across reload; clip layers carry `assetId` + real duration) |
 
-**Execution scope (confirmed):** Parts 1–8 verified end-to-end against the running backend (see Verification). Plan complete.
+**Execution scope (confirmed):** Parts 1–8 + Pass 9 verified end-to-end against the running backend (see Verification). Plan complete.
 
 ## Confirmed backend contract (from backend agent work)
 
@@ -111,6 +112,20 @@ FastAPI backend at `~/Projects/Lumora` (`:8000`) · Next.js frontend at `~/Proje
 - All remaining `console.log("... — mock")` stubs replaced: undo/redo, timeline zoom, preview volume/fullscreen, Google SSO, asset menu, workspace invite/edit/change-plan, and the tier-0 suggestion cards (backend supports `POST /api/jobs {tier:0, jobType:"caption"|"transition"|"cut_points"|"motion_spec"}` — documented in the `todo` comments, apply-result flow out of scope).
 - Typecheck clean; lint has only the pre-existing `@next/next/no-img-element` warning.
 
+## Pass 9 — Real assets → B2 → playable preview
+
+Scope (confirmed with user): uploaded files only (AI-generated asset persistence out of scope), single active clip at the playhead (no multi-track compositing), B2 credentials are valid.
+
+- Backend `controllers/projects.py::createProject` now creates the four default tracks (`DEFAULT_TRACK_KINDS = ["video","audio","text","effects"]`) right after timeline creation, so `GET /api/projects/{id}/timeline` returns all four immediately (no frontend lazy-creation needed; the editor keeps its existing path as a safety fallback for legacy projects).
+- Backend `core/assets/assets.py` gains `persistStorageMetadata(session, *, assetId, b2Key, sha256, duration)`; `assets/controllers/assets.py::importAsset` now uploads to B2, probes duration via `getMediaInfo`, persists metadata, and unlinks the temp file in `finally`. Same temp-file fix in `core/services/import_layer.py::importAndLayer`.
+- Backend `core/services/composition.py::buildAssetRegistry` rewritten: scans composition layers for `assetId`s, loads real `AssetRow`s via `_loadAssetForRender`, downloads from B2 when `localPath` is absent (keeps the row `id`), and falls back to asset-less render.
+- Backend `core/timeline/layers.py` now enriches `clip`/`audio` layer params with the asset's real `duration` (seconds) at create and update time, so a clip's duration survives a reload instead of coming back as 0.
+- Frontend `PreviewPanel` (`src/components/editor/previewPanel.tsx`) rewritten as a real player: resolves the topmost video-track layer overlapping the playhead (`startMs ≤ t < startMs+durationMs`, audio fallback), fetches the presigned URL via `getAssetUrl`, renders `<video>`/`<audio>`, Play/Pause drives the media element, an rAF loop syncs the playhead from `timeupdate`-style polling, scrubbing seeks, and missing `assetId`/URL keep the placeholder + a toast. Volume + Fullscreen now control the real element.
+  - Fixed two bugs found during verification: the rAF loop passed milliseconds into `setPlayheadPosition` (which stores seconds), teleporting the playhead out of the clip and unmounting the video; and `onLoadedMetadata` read `e.currentTarget.duration` inside a `setMedia` updater that runs lazily during the next render (React nulls `currentTarget` after the handler), crashing the editor with "Cannot read properties of null (reading 'duration')".
+- Frontend `assetLibraryPanel.tsx` `handleImport` shows the real persisted `duration` (`0:03` for the 3s test clip) instead of the 10s fallback.
+- CDP-verified end-to-end (`/tmp/opencode/verify-preview.mjs`): fresh project → 4 tracks immediately (API + DB); upload `test-upload.mp4` through the UI → DB `b2_key=uploads/{projectId}/{assetId}.mp4`, `duration=3`; add to timeline → chip shows real name/duration, layer persisted with `params.assetId`; Play → `<video>` src is a live `https://s3.us-east-005.backblazeb2.com/lumora-b2/...` presigned URL, `currentTime` 0.80s→1.99s, playhead 0.8s→2s; reload → preview still loads the real clip (3s) from B2.
+- Backend changes live in `~/Projects/Lumora` (separate repo); frontend changes in this repo. Typecheck clean; lint only the pre-existing `no-img-element` warning.
+
 ## Verification
 
 - Backend running (`uv run python main.py` on `:8000`; Redis/Celery optional until Part 6 — the app starts fine without it).
@@ -126,6 +141,7 @@ FastAPI backend at `~/Projects/Lumora` (`:8000`) · Next.js frontend at `~/Proje
 4. ✅ Part 6 (AI + WS) — done & CDP-verified
 5. ✅ Part 7 (export) — done & CDP-verified
 6. ✅ Part 8 (polish) — done & CDP-verified
+7. ✅ Pass 9 (real assets → B2 → playable preview) — done & CDP-verified
 
 ## Risks
 
