@@ -1,8 +1,10 @@
 "use client";
 
-import { Check, Film, Lock, Music, Type } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Check, Film, Loader2, Lock, Music, Type } from "lucide-react";
 
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { getAssetManifest } from "@/lib/api/assets";
 import { cn } from "@/lib/utils/cn";
 import type { Layer } from "@/types";
 
@@ -55,10 +57,48 @@ export function AssetManifestDrawer({
   onOpenChange: (open: boolean) => void;
   layer: Layer | null;
 }) {
+  const [manifest, setManifest] = useState<{
+    runId: string | null;
+    data: Record<string, unknown>;
+  } | null>(null);
+  const [loading, setLoading] = useState(() => Boolean(open && layer?.assetId));
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open || !layer?.assetId) return;
+    let active = true;
+    getAssetManifest(layer.assetId).then(
+      (res) => {
+        if (!active) return;
+        setLoading(false);
+        setError(null);
+        setManifest(res);
+      },
+      (err) => {
+        if (!active) return;
+        setLoading(false);
+        setManifest(null);
+        setError(
+          err instanceof Error ? err.message : "Manifest not available"
+        );
+      }
+    );
+    return () => {
+      active = false;
+    };
+  }, [open, layer?.assetId]);
+
   if (!layer) return null;
 
   const Icon = TYPE_ICON[layer.type];
   const assetId = layer.assetId ?? "asset_mock_001";
+  const manifestText = loading
+    ? "Loading manifest…"
+    : error
+      ? `// ${error}`
+      : manifest
+        ? JSON.stringify({ runId: manifest.runId, data: manifest.data }, null, 2)
+        : MANIFEST_JSON(assetId);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -178,7 +218,13 @@ export function AssetManifestDrawer({
               "font-mono text-xs leading-relaxed text-[var(--color-text-secondary)]"
             )}
           >
-            {MANIFEST_JSON(assetId)}
+            {loading ? (
+              <span className="flex items-center gap-2 text-[var(--color-text-muted)]">
+                <Loader2 className="size-3 animate-spin" /> Loading manifest…
+              </span>
+            ) : (
+              manifestText
+            )}
           </pre>
         </div>
       </SheetContent>
