@@ -5,11 +5,13 @@ type EditorState = {
   projectName: string | null;
   selectedLayerId: string | null;
   playheadPosition: number;
+  isPlaying: boolean;
   draggingLayerId: string | null;
   setProject: (projectId: string) => void;
   setProjectName: (projectName: string) => void;
   selectLayer: (layerId: string | null) => void;
   setPlayheadPosition: (position: number | ((prev: number) => number)) => void;
+  setPlaying: (playing: boolean) => void;
   setDraggingLayer: (layerId: string | null) => void;
 };
 
@@ -18,6 +20,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   projectName: null,
   selectedLayerId: null,
   playheadPosition: 0,
+  isPlaying: false,
   draggingLayerId: null,
   setProject: (projectId) => set({ projectId }),
   setProjectName: (projectName) => set({ projectName }),
@@ -29,5 +32,6 @@ export const useEditorStore = create<EditorState>((set) => ({
           ? position(state.playheadPosition)
           : position,
     })),
+  setPlaying: (isPlaying) => set({ isPlaying }),
   setDraggingLayer: (draggingLayerId) => set({ draggingLayerId }),
 }));

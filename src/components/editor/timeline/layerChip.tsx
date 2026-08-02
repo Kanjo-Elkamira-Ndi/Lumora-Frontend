@@ -13,25 +13,24 @@ const TYPE_TOP_BORDER: Record<Layer["type"], string> = {
 
 export function LayerChip({
   layer,
-  containerWidth,
-  totalDuration,
+  pxPerSec,
   onShowProvenance,
 }: {
   layer: Layer;
-  containerWidth: number;
-  totalDuration: number;
+  pxPerSec: number;
   onShowProvenance?: (layer: Layer) => void;
 }) {
   const selectLayer = useEditorStore((s) => s.selectLayer);
   const selectedLayerId = useEditorStore((s) => s.selectedLayerId);
   const selected = selectedLayerId === layer.id;
-  const width = (layer.durationMs / 1000 / totalDuration) * containerWidth;
-  const left = (layer.startMs / 1000 / totalDuration) * containerWidth;
+  const width = Math.max((layer.durationMs / 1000) * pxPerSec, 4);
+  const left = (layer.startMs / 1000) * pxPerSec;
 
   return (
     <button
       type="button"
       aria-label={`Layer: ${layer.label}`}
+      title={layer.label}
       onClick={() => selectLayer(layer.id)}
       onContextMenu={(e) => {
         if (onShowProvenance) {

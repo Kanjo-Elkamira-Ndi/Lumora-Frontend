@@ -64,14 +64,15 @@ export function PreviewPanel() {
   const mediaRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [media, setMedia] = useState<LoadedMedia | null>(null);
+  const isPlaying = useEditorStore((s) => s.isPlaying);
+  const setPlaying = useEditorStore((s) => s.setPlaying);
   const [mediaError, setMediaError] = useState<{
     assetId: string;
     message: string;
   } | null>(null);
-  const [muted, setMuted] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const totalSeconds = timeline ? timeline.durationMs / 1000 : FALLBACK_SECONDS;
 
@@ -130,14 +131,14 @@ export function PreviewPanel() {
     }
     if (isPlaying && mediaEl.paused) {
       void mediaEl.play().catch(() => {
-        setIsPlaying(false);
+        setPlaying(false);
         toastError("Playback failed");
       });
     }
     if (!isPlaying && !mediaEl.paused) {
       mediaEl.pause();
     }
-  }, [activeClip?.layer.id, activeStartMs, currentMediaUrl, isPlaying]);
+  }, [activeClip?.layer.id, activeStartMs, currentMediaUrl, isPlaying, setPlaying]);
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -153,7 +154,7 @@ export function PreviewPanel() {
         const endSec = (clip.startMs + clip.durationMs) / 1000;
         if (tSec >= endSec) {
           setPlayheadPosition(endSec);
-          setIsPlaying(false);
+          setPlaying(false);
           mediaEl.pause();
           return;
         }
@@ -163,19 +164,19 @@ export function PreviewPanel() {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [isPlaying, setPlayheadPosition]);
+  }, [isPlaying, setPlayheadPosition, setPlaying]);
 
   const togglePlayback = () => {
     if (!activeClip) return;
     if (isPlaying) {
-      setIsPlaying(false);
+      setPlaying(false);
       return;
     }
     const mediaEl = mediaRef.current;
     if (!mediaEl || !currentMediaUrl) return;
     void mediaEl
       .play()
-      .then(() => setIsPlaying(true))
+      .then(() => setPlaying(true))
       .catch(() => toastError("Playback failed"));
   };
 
