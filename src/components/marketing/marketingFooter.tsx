@@ -101,7 +101,7 @@ export function MarketingFooter() {
         </div>
         <div className="mt-24 flex flex-col items-center justify-between gap-8 border-t border-[var(--color-border)] pt-8 md:flex-row">
           <p className="text-sm text-[var(--color-text-muted)]">
-            © 2026 Lumora Studio Inc. All rights reserved.
+            © 2026 Lumora Studio Inc. Developed By The Code-Alchemist. All rights reserved.
           </p>
           <div className="flex gap-4">
             {SOCIAL_ICONS.map(({ label, icon: Icon }) => (
