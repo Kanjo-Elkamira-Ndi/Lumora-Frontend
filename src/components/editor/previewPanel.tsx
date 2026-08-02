@@ -88,6 +88,18 @@ export function PreviewPanel() {
     mediaError && mediaError.assetId === assetId ? mediaError.message : null;
   const loading = Boolean(assetId) && !currentMedia && !currentError;
 
+  const mediaDuration =
+    currentMedia?.duration ??
+    (activeClip ? activeClip.durationMs / 1000 : undefined) ??
+    totalSeconds;
+  const mediaPosition =
+    activeClip && currentMedia
+      ? Math.min(
+          mediaDuration,
+          Math.max(0, playheadPosition - (activeStartMs ?? 0) / 1000)
+        )
+      : playheadPosition;
+
   useEffect(() => {
     if (!assetId) return;
     let cancelled = false;
@@ -253,8 +265,7 @@ export function PreviewPanel() {
         )}
 
         <div className="pointer-events-none absolute bottom-3 left-3 rounded bg-black/70 px-2 py-1 font-mono text-[10px] text-white/80">
-          {formatTimecode(currentMedia?.duration ?? playheadPosition)} /{" "}
-          {formatTimecode(totalSeconds)}
+          {formatTimecode(mediaPosition)} / {formatTimecode(mediaDuration)}
         </div>
       </div>
 
