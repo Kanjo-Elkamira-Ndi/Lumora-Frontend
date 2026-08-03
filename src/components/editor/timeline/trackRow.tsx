@@ -5,6 +5,7 @@ import { Film, Music, Sparkles, Type, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import type { Layer, Track } from "@/types";
 import { LayerChip } from "./layerChip";
+import { Film, Music, Type, Sparkles, type LucideIcon } from "lucide-react";
 
 const TRACK_ICONS: Record<Track["type"], LucideIcon> = {
   video: Film,
@@ -44,6 +45,7 @@ export function TrackRow({
         {track.layers.map((layer) => (
           <LayerChip
             key={layer.id}
+            trackId={track.id}
             layer={layer}
             pxPerSec={pxPerSec}
             onShowProvenance={onShowProvenance}

@@ -5,6 +5,7 @@ import { Film, MousePointer2, Music, Sparkles, Type, type LucideIcon } from "luc
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
+import { TextStyleControls } from "@/components/editor/properties/textStyleControls";
 import { cn } from "@/lib/utils/cn";
 import { useEditorStore } from "@/stores/editorStore";
 import { useTimelineStore } from "@/stores/timelineStore";
@@ -88,7 +89,7 @@ export function LayerPropertiesPanel() {
     }
   }
 
-  const updateField = (field: string, value: string | number) => {
+  const updateField = (field: string, value: unknown) => {
     if (!selected) return;
     const layer = selected.layer;
     const num = typeof value === "number" ? value : Number(value);
@@ -112,7 +113,7 @@ export function LayerPropertiesPanel() {
       .updateLayerOptimistic(selected.track.id, layer.id, patch);
   };
 
-  const onUpdate = (field: string, value: string | number) =>
+  const onUpdate = (field: string, value: unknown) =>
     updateField(field, value);
 
   return (
@@ -213,32 +214,14 @@ export function LayerPropertiesPanel() {
                   <FieldLabel>Content</FieldLabel>
                   <Textarea
                     rows={3}
-                    defaultValue={String(selected.layer.props?.content ?? "")}
+                    value={String(selected.layer.props?.content ?? "")}
                     onChange={(e) => onUpdate("content", e.target.value)}
                   />
                 </div>
-                <div>
-                  <FieldLabel>Font Size</FieldLabel>
-                  <input
-                    type="number"
-                    aria-label="Font Size"
-                    defaultValue={Number(selected.layer.props?.size ?? 28)}
-                    onChange={(e) => onUpdate("fontSize", e.target.value)}
-                    className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2 py-1.5 text-xs text-white focus:border-[var(--color-primary)] focus:outline-none"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <NumberField
-                    label="Position X"
-                    defaultValue={960}
-                    onUpdate={(field, value) => onUpdate(field, value)}
-                  />
-                  <NumberField
-                    label="Position Y"
-                    defaultValue={540}
-                    onUpdate={(field, value) => onUpdate(field, value)}
-                  />
-                </div>
+                <TextStyleControls
+                  props={selected.layer.props ?? {}}
+                  onChange={(field, value) => onUpdate(field, value)}
+                />
               </div>
             )}
 

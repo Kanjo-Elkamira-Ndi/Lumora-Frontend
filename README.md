@@ -50,7 +50,7 @@ cp .env.example .env.local
 pnpm dev
 ```
 
-App runs at `http://localhost:3000`.
+App runs at `http://localhost:3002` (port 3000 is owned by the hermes WhatsApp bridge — it kills whatever is bound to :3000 on its ~5 min reconnect loop).
 
 ---
 
