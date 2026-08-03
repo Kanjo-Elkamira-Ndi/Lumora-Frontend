@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Sparkles, ZoomIn, ZoomOut } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -36,11 +36,19 @@ function formatTime(seconds: number) {
   return `${m}:${String(rem).padStart(2, "0")}`;
 }
 
-type DragState = {
-  asset: Pick<Asset, "id" | "kind" | "name" | "durationMs">;
-  trackId: string;
-  timeSec: number;
-};
+type DragState =
+  | {
+      kind: "asset";
+      asset: Pick<Asset, "id" | "kind" | "name" | "durationMs">;
+      trackId: string;
+      timeSec: number;
+    }
+  | {
+      kind: "move";
+      trackId: string;
+      layerId: string;
+      timeSec: number;
+    };
 
 function parseAssetFromDrag(e: React.DragEvent): Pick<
   Asset,
@@ -57,6 +65,22 @@ function parseAssetFromDrag(e: React.DragEvent): Pick<
       name: data.name ?? "Asset",
       durationMs: data.durationMs,
     };
+  } catch {
+    return null;
+  }
+}
+
+function parseMoveFromDrag(e: React.DragEvent): {
+  trackId: string;
+  layerId: string;
+} | null {
+  try {
+    const raw = e.dataTransfer.getData("application/json");
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (data.action !== "move-layer") return null;
+    if (!data.trackId || !data.layerId) return null;
+    return { trackId: data.trackId, layerId: data.layerId };
   } catch {
     return null;
   }
@@ -135,8 +159,9 @@ export function TimelinePanel() {
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     const asset = parseAssetFromDrag(e);
-    if (!asset) return;
-    e.dataTransfer.dropEffect = "copy";
+    const move = parseMoveFromDrag(e);
+    if (!asset && !move) return;
+    e.dataTransfer.dropEffect = asset ? "copy" : "move";
 
     const scroller = scrollRef.current;
     if (scroller) {
@@ -148,32 +173,60 @@ export function TimelinePanel() {
     const contentRect = contentRef.current?.getBoundingClientRect();
     const xInContent = e.clientX - (contentRect?.left ?? 0);
     const timeSec = Math.max(0, (xInContent - LABEL_WIDTH) / activePxPerSec);
-    const trackId = resolveDropTrackId(timeline, asset.kind);
+    const trackId = asset
+      ? resolveDropTrackId(timeline, asset.kind)
+      : move!.trackId;
     if (!trackId) return;
 
     setDragState((prev) => {
       const t = Math.round(timeSec * 10) / 10;
-      if (
-        prev &&
-        prev.asset.id === asset.id &&
-        prev.trackId === trackId &&
-        Math.abs(prev.timeSec - t) < 0.05
-      ) {
-        return prev;
+      if (prev) {
+        if (asset && prev.kind === "asset") {
+          if (
+            prev.asset.id === asset.id &&
+            prev.trackId === trackId &&
+            Math.abs(prev.timeSec - t) < 0.05
+          ) {
+            return prev;
+          }
+        } else if (!asset && prev.kind === "move") {
+          if (
+            prev.trackId === trackId &&
+            prev.layerId === move!.layerId &&
+            Math.abs(prev.timeSec - t) < 0.05
+          ) {
+            return prev;
+          }
+        }
       }
-      return { asset, trackId, timeSec: t };
+      return asset
+        ? { kind: "asset", asset, trackId, timeSec: t }
+        : { kind: "move", trackId, layerId: move!.layerId, timeSec: t };
     });
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const asset = parseAssetFromDrag(e);
+    const move = parseMoveFromDrag(e);
     setDragState(null);
-    if (!asset) return;
-    const contentRect = contentRef.current?.getBoundingClientRect();
-    const xInContent = e.clientX - (contentRect?.left ?? 0);
-    const timeSec = Math.max(0, (xInContent - LABEL_WIDTH) / activePxPerSec);
-    useTimelineStore.getState().addAssetLayer(asset, timeSec * 1000);
+    if (asset) {
+      const contentRect = contentRef.current?.getBoundingClientRect();
+      const xInContent = e.clientX - (contentRect?.left ?? 0);
+      const timeSec = Math.max(0, (xInContent - LABEL_WIDTH) / activePxPerSec);
+      useTimelineStore.getState().addAssetLayer(asset, timeSec * 1000);
+      return;
+    }
+    if (move) {
+      const contentRect = contentRef.current?.getBoundingClientRect();
+      const xInContent = e.clientX - (contentRect?.left ?? 0);
+      const timeSec = Math.max(0, (xInContent - LABEL_WIDTH) / activePxPerSec);
+      useTimelineStore
+        .getState()
+        .updateLayerOptimistic(move.trackId, move.layerId, {
+          startMs: timeSec * 1000,
+        });
+    }
   };
 
   const handleDragLeave = (e: React.DragEvent) => {

@@ -77,3 +77,10 @@ export function deleteLayer(trackId: string, layerId: string) {
     method: "DELETE",
   });
 }
+
+export function deleteTrack(timelineId: string, trackId: string) {
+  return apiFetch<void>(
+    `/timelines/${timelineId}/tracks/${trackId}`,
+    { method: "DELETE" }
+  );
+}

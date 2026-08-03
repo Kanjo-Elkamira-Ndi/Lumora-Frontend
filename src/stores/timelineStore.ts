@@ -3,6 +3,7 @@ import { create } from "zustand";
 import {
   createLayer,
   deleteLayer,
+  deleteTrack,
   updateLayerParams,
 } from "@/lib/api/timeline";
 import {
@@ -26,7 +27,13 @@ type TimelineState = {
     layerId: string,
     patch: Partial<Layer>
   ) => void;
+  updateLayerLocal: (
+    trackId: string,
+    layerId: string,
+    patch: Partial<Layer>
+  ) => void;
   removeLayer: (trackId: string, layerId: string) => void;
+  removeTrack: (trackId: string) => void;
 };
 
 function updateTrack(
@@ -72,9 +79,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         set({
           timeline: updateTrack(current, trackId, (layers) =>
             layers.map((l) =>
-              l.id === tempLayer.id
-                ? mergeServerLayer(tempLayer, created)
-                : l
+              l.id === tempLayer.id ? mergeServerLayer(tempLayer, created) : l
             )
           ),
         });
@@ -143,6 +148,15 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         });
       });
   },
+  updateLayerLocal: (trackId, layerId, patch) => {
+    const timeline = get().timeline;
+    if (!timeline) return;
+    set({
+      timeline: updateTrack(timeline, trackId, (layers) =>
+        layers.map((l) => (l.id === layerId ? { ...l, ...patch } : l))
+      ),
+    });
+  },
   removeLayer: (trackId, layerId) => {
     const timeline = get().timeline;
     if (!timeline) return;
@@ -166,6 +180,28 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
           return next;
         }),
       });
+    });
+  },
+  removeTrack: (trackId) => {
+    const timeline = get().timeline;
+    if (!timeline) return;
+    const index = timeline.tracks.findIndex((t) => t.id === trackId);
+    if (index === -1) return;
+    const [track] = timeline.tracks.slice(index, index + 1);
+    set({
+      timeline: {
+        ...timeline,
+        tracks: timeline.tracks.filter((t) => t.id !== trackId),
+      },
+    });
+    deleteTrack(timeline.id, trackId).catch((error) => {
+      console.error("Failed to delete track", error);
+      const current = get().timeline;
+      if (!current) return;
+      const restored = track
+        ? [...current.tracks.slice(0, index), track, ...current.tracks.slice(index)]
+        : current.tracks;
+      set({ timeline: { ...current, tracks: restored } });
     });
   },
 }));

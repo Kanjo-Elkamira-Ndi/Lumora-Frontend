@@ -6,6 +6,7 @@ import {
   Check,
   CheckCircle,
   Loader2,
+  X,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -16,44 +17,29 @@ import { toastError, toastSuccess } from "@/lib/utils/toast";
 import { useAiUiStore } from "@/stores/aiUiStore";
 import { useTimelineStore } from "@/stores/timelineStore";
 
-const WAVE_HEIGHTS = [
-  "h-6", "h-3", "h-8", "h-4", "h-10", "h-2", "h-6", "h-4",
-  "h-8", "h-3", "h-10", "h-4", "h-6", "h-2", "h-8", "h-3",
-  "h-4", "h-6", "h-10", "h-3", "h-8", "h-4", "h-2", "h-6",
-  "h-10", "h-3", "h-4", "h-8", "h-6", "h-2", "h-10", "h-4",
-  "h-6", "h-3", "h-8", "h-4", "h-2", "h-6", "h-8", "h-3",
-];
-
-function ResultPreviewCard() {
-  return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-4">
-      <p className="mb-3 text-xs text-[var(--color-text-muted)]">
-        Result preview
-      </p>
-      <div className="flex h-12 items-center gap-0.5 overflow-hidden rounded-md bg-[var(--color-surface-3)] px-3">
-        {WAVE_HEIGHTS.map((height, i) => (
-          <div
-            key={i}
-            className={cn("w-0.5 shrink-0 rounded-full bg-[#FF6A1A]", height)}
-          />
-        ))}
-      </div>
-      <input
-        type="range"
-        className="mt-3 w-full"
-        style={{ accentColor: "#FF6A1A" }}
-      />
-    </div>
-  );
-}
+type AgenticRunDto = {
+  score: number;
+  decision: "store" | "retry" | "escalate";
+  checks: { name: string; passed: boolean; score: number; detail: string }[];
+};
 
 function RunningView({ job }: { job: JobDto }) {
   const title =
-    job.jobType === "music"
-      ? "Generating music…"
-      : job.jobType === "image"
-        ? "Generating image…"
-        : "Generating voiceover…";
+    job.jobType === "agentic"
+      ? "Generating & validating voiceover…"
+      : job.jobType === "music"
+        ? "Generating music…"
+        : job.jobType === "image"
+          ? "Generating image…"
+          : job.jobType === "video"
+            ? "Generating video…"
+            : "Generating voiceover…";
+
+  const detail =
+    job.jobType === "agentic"
+      ? "Running quality checks (duration, ASR roundtrip, silence)…"
+      : "Generating with GMI Cloud…";
+
   return (
     <>
       <div className="flex items-center gap-2">
@@ -69,18 +55,99 @@ function RunningView({ job }: { job: JobDto }) {
           <div className="h-full w-1/3 animate-pulse rounded-full bg-[var(--color-primary)]" />
         </div>
         <p className="text-sm text-[var(--color-text-muted)]">
-          {job.status === "pending"
-            ? "Queued…"
-            : job.status === "running"
-              ? "Generating with GMI Cloud…"
-              : "Waiting…"}
+          {job.status === "pending" ? "Queued…" : detail}
         </p>
-        <p className="text-xs text-[var(--color-text-muted)]">
-          Attempt {Math.min(job.attempts + 1, job.maxAttempts)} of{" "}
-          {job.maxAttempts}
-        </p>
+        {job.jobType === "agentic" && (
+          <p className="text-xs text-[var(--color-text-muted)]">
+            Attempt {Math.min(job.attempts + 1, job.maxAttempts)} of{" "}
+            {job.maxAttempts}
+          </p>
+        )}
       </div>
     </>
+  );
+}
+
+function CheckItem({
+  name,
+  passed,
+  score,
+  detail,
+}: AgenticRunDto["checks"][number]) {
+  return (
+    <div className="flex items-start gap-2">
+      <span
+        className={cn(
+          "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full",
+          passed
+            ? "bg-[var(--color-success)]"
+            : "bg-[var(--color-error)]"
+        )}
+      >
+        {passed ? (
+          <Check size={10} className="text-[var(--color-surface-1)]" />
+        ) : (
+          <X size={10} className="text-[var(--color-surface-1)]" />
+        )}
+      </span>
+      <div className="flex-1">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs font-medium text-white">{name}</span>
+          <span className="text-xs tabular-nums text-[var(--color-text-muted)]">
+            {score.toFixed(2)}
+          </span>
+        </div>
+        {detail && (
+          <p className="text-[11px] text-[var(--color-text-muted)]">{detail}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AttemptItem({
+  index,
+  run,
+}: {
+  index: number;
+  run: AgenticRunDto;
+}) {
+  const passed = run.decision === "store";
+  return (
+    <div className="flex items-start gap-3">
+      <div
+        className={cn(
+          "flex size-7 shrink-0 items-center justify-center rounded-full border",
+          passed
+            ? "border-[rgba(34,197,94,0.4)] text-[var(--color-success)]"
+            : "border-[var(--color-border)] text-[var(--color-text-muted)]"
+        )}
+      >
+        <span className="text-xs">{index}</span>
+      </div>
+      <div className="flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-medium text-white">
+            Attempt {index} — GMI Cloud
+          </span>
+          <span
+            className={cn(
+              "inline-flex rounded-full border px-2 py-0.5 text-xs",
+              passed
+                ? "border-[rgba(34,197,94,0.4)] bg-[rgba(34,197,94,0.15)] text-[var(--color-success)]"
+                : "border-[rgba(239,68,68,0.4)] bg-[rgba(239,68,68,0.15)] text-[var(--color-error)]"
+            )}
+          >
+            {passed ? "Passed ✓" : "Failed"}
+          </span>
+        </div>
+        <div className="mt-2 flex flex-col gap-1.5">
+          {run.checks.map((check) => (
+            <CheckItem key={check.name} {...check} />
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -91,33 +158,58 @@ function CompleteView({
   job: JobDto;
   onClose: () => void;
 }) {
+  const result = (job.result ?? {}) as Record<string, unknown>;
+  const asset = (result.asset ?? {}) as {
+    id?: string;
+    duration?: number;
+  };
+  const layerId = (result.layerId as string | null) ?? null;
+  const runs = (result.runs ?? []) as AgenticRunDto[];
+  const isAudio = job.jobType === "voiceover" || job.jobType === "music";
+  const hasLayer = Boolean(layerId || asset.id);
+
   const handleAccept = () => {
-    const asset = (job.result?.asset ?? {}) as {
-      id?: string;
-      duration?: number;
-    };
     const timeline = useTimelineStore.getState().timeline;
-    const audioTrack = timeline?.tracks.find((t) => t.type === "audio");
-    if (!audioTrack) {
-      toastError("No audio track available");
+    if (!timeline) {
+      toastError("No timeline loaded");
+      return;
+    }
+    if (layerId) {
+      toastSuccess("Result already added to timeline");
+      useAiUiStore.getState().setActiveJob(null);
+      onClose();
+      return;
+    }
+    const trackType = isAudio ? "audio" : "video";
+    const track = timeline.tracks.find((t) => t.type === trackType);
+    if (!track) {
+      toastError(`No ${trackType} track available`);
       return;
     }
     const durationMs = (asset.duration ?? 12) * 1000;
-    useTimelineStore.getState().addLayer(audioTrack.id, {
-      id: `lyr_ai_vo_${Date.now()}`,
-      type: "audio",
-      label: "Voiceover — AI Generated",
+    const label =
+      job.jobType === "music"
+        ? "Music — AI Generated"
+        : job.jobType === "image"
+          ? "Image — AI Generated"
+          : job.jobType === "video"
+            ? "Video — AI Generated"
+            : "Voiceover — AI Generated";
+    useTimelineStore.getState().addLayer(track.id, {
+      id: `lyr_ai_${job.jobType}_${Date.now()}`,
+      type: trackType,
+      label,
       source: "genblaze_generated",
       startMs: 0,
       durationMs,
       assetId: asset.id,
       props: {
         assetId: asset.id,
-        volume: 80,
-        name: "Voiceover — AI Generated",
+        name: label,
+        ...(isAudio ? { volume: 80 } : {}),
       },
     });
-    toastSuccess("Voiceover added to timeline");
+    toastSuccess("Result added to timeline");
     useAiUiStore.getState().setActiveJob(null);
     onClose();
   };
@@ -126,72 +218,91 @@ function CompleteView({
     <>
       <div className="flex items-center gap-2">
         <CheckCircle size={18} className="text-[var(--color-success)]" />
-        <SheetTitle className="text-base">Voiceover ready</SheetTitle>
+        <SheetTitle className="text-base">
+          {job.jobType === "agentic" ? "Voiceover passed quality checks" : "Result ready"}
+        </SheetTitle>
       </div>
 
-      <div className="mt-1 flex flex-col gap-4">
-        <div className="flex items-start gap-3">
-          <div className="flex size-7 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)]">
-            <span className="text-xs text-[var(--color-text-muted)]">1</span>
-          </div>
-          <div className="flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-medium text-white">
-                Attempt 1 — GMI Cloud
-              </span>
-              <span className="inline-flex rounded-full border border-[rgba(239,68,68,0.4)] bg-[rgba(239,68,68,0.15)] px-2 py-0.5 text-xs text-[var(--color-error)]">
-                Failed
-              </span>
-            </div>
-            <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-              ASR mismatch (0.61 confidence)
-            </p>
-          </div>
-        </div>
-
-        <div className="ml-3.5 h-4 w-px bg-[var(--color-border)]" />
-
-        <div className="flex items-start gap-3">
-          <div className="flex size-7 shrink-0 items-center justify-center rounded-full border border-[var(--color-primary)] bg-[var(--color-surface-2)]">
-            <span className="text-xs text-[var(--color-primary)]">2</span>
-          </div>
-          <div className="flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-medium text-white">
-                Attempt 2 — ElevenLabs
-              </span>
-              <span className="inline-flex rounded-full border border-[rgba(34,197,94,0.4)] bg-[rgba(34,197,94,0.15)] px-2 py-0.5 text-xs text-[var(--color-success)]">
-                Passed ✓
-              </span>
-            </div>
-            <div className="mt-2 flex flex-col gap-1">
-              {["Duration ✓", "ASR match: 0.94 ✓", "Silence / clipping ✓"].map(
-                (check) => (
-                  <div key={check} className="flex items-center gap-2">
-                    <Check
-                      size={12}
-                      className="text-[var(--color-success)]"
-                    />
-                    <span className="text-xs text-[var(--color-text-muted)]">
-                      {check}
-                    </span>
-                  </div>
-                )
+      {runs.length > 0 ? (
+        <div className="mt-5 flex flex-col gap-1">
+          {runs.map((run, i) => (
+            <div key={i} className="flex flex-col">
+              {i > 0 && (
+                <div className="ml-3.5 h-4 w-px bg-[var(--color-border)]" />
               )}
+              <AttemptItem index={i + 1} run={run} />
             </div>
-          </div>
+          ))}
         </div>
-      </div>
+      ) : (
+        <p className="mt-4 text-sm leading-relaxed text-[var(--color-text-muted)]">
+          Generated {asset.duration ? `${asset.duration}s ` : ""}of{" "}
+          {job.jobType} — review it below, then add it to the timeline.
+        </p>
+      )}
 
       <div className="mt-6 flex flex-col gap-2">
-        <ResultPreviewCard />
-        <Button className="w-full" onClick={handleAccept}>
+        <Button className="w-full" onClick={handleAccept} disabled={!hasLayer}>
           Accept &amp; add to timeline
         </Button>
         <Button
           variant="ghost"
           className="w-full"
           onClick={() => onClose()}
+        >
+          Close
+        </Button>
+      </div>
+    </>
+  );
+}
+
+function EscalatedView({
+  job,
+  onClose,
+}: {
+  job: JobDto;
+  onClose: () => void;
+}) {
+  const result = (job.result ?? {}) as Record<string, unknown>;
+  const runs = (result.runs ?? []) as AgenticRunDto[];
+
+  return (
+    <>
+      <div className="flex items-center gap-2">
+        <AlertTriangle
+          size={18}
+          className="text-[var(--color-primary)]"
+        />
+        <SheetTitle className="text-base">
+          We couldn&apos;t get a passing result
+        </SheetTitle>
+      </div>
+
+      <p className="mt-1 text-sm leading-relaxed text-[var(--color-text-muted)]">
+        Every attempt failed its quality checks. Here&apos;s the best of{" "}
+        {job.attempts} attempt{job.attempts === 1 ? "" : "s"} — you can accept
+        it as-is, edit your prompt and retry, or upload your own file instead.
+      </p>
+
+      {runs.length > 0 && (
+        <div className="mt-4 flex flex-col gap-1">
+          {runs.map((run, i) => (
+            <div key={i} className="flex flex-col">
+              {i > 0 && (
+                <div className="ml-3.5 h-4 w-px bg-[var(--color-border)]" />
+              )}
+              <AttemptItem index={i + 1} run={run} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-4 flex flex-col gap-2">
+        <Button
+          variant="secondary"
+          className="w-full border border-[var(--color-border)]"
+          onClick={onClose}
         >
           Close
         </Button>
@@ -233,9 +344,6 @@ export function AgenticProgressDrawer({
 }) {
   const activeJob = useAiUiStore((s) => s.activeJob);
   const [job, setJob] = useState<JobDto | null>(null);
-  const [mockState, setMockState] = useState<"complete" | "escalated">(
-    "complete"
-  );
 
   useEffect(() => {
     if (!open || !activeJob) return;
@@ -262,7 +370,7 @@ export function AgenticProgressDrawer({
           : {
               id: activeJob.jobId,
               projectId: "",
-              tier: 1,
+              tier: activeJob.kind === "agentic" ? 2 : 1,
               jobType: activeJob.kind,
               prompt: "",
               status: message.status,
@@ -300,7 +408,7 @@ export function AgenticProgressDrawer({
   const currentJob: JobDto | null = job ?? (activeJob ? {
     id: activeJob.jobId,
     projectId: "",
-    tier: 1,
+    tier: activeJob.kind === "agentic" ? 2 : 1,
     jobType: activeJob.kind,
     prompt: "",
     status: "pending",
@@ -322,7 +430,11 @@ export function AgenticProgressDrawer({
       >
         {real && currentJob ? (
           currentJob.status === "completed" ? (
-            <CompleteView job={currentJob} onClose={handleClose} />
+            (currentJob.result?.decision as string | undefined) === "escalate" ? (
+              <EscalatedView job={currentJob} onClose={handleClose} />
+            ) : (
+              <CompleteView job={currentJob} onClose={handleClose} />
+            )
           ) : currentJob.status === "failed" ? (
             <ErrorView
               message={currentJob.error ?? "Generation failed"}
@@ -332,99 +444,18 @@ export function AgenticProgressDrawer({
             <RunningView job={currentJob} />
           )
         ) : (
-          <>
-            <div className="flex items-center justify-end gap-2 text-xs text-[var(--color-text-muted)]">
-              <span>Dev: {activeJob ? activeJob.jobId : "mock"}</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-[10px]"
-                onClick={() => setMockState("complete")}
-              >
-                Complete
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-[10px]"
-                onClick={() => setMockState("escalated")}
-              >
-                Escalated
-              </Button>
-            </div>
-
-            {mockState === "complete" ? (
-              <CompleteView
-                job={{
-                  id: activeJob?.jobId ?? "job_dev_complete",
-                  projectId: "",
-                  tier: 1,
-                  jobType: "voiceover",
-                  prompt: "",
-                  status: "completed",
-                  result: { asset: { duration: 12 } },
-                  error: null,
-                  attempts: 2,
-                  maxAttempts: 3,
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                }}
-                onClose={handleClose}
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2">
+              <Loader2
+                size={18}
+                className="animate-spin text-[var(--color-primary)]"
               />
-            ) : (
-              <>
-                <div className="flex items-center gap-2">
-                  <AlertTriangle
-                    size={18}
-                    className="text-[var(--color-primary)]"
-                  />
-                  <SheetTitle className="text-base">
-                    We couldn&apos;t get a passing result
-                  </SheetTitle>
-                </div>
-
-                <p className="mt-1 text-sm leading-relaxed text-[var(--color-text-muted)]">
-                  Here&apos;s the best attempt (Attempt 3, Stability Audio). You
-                  can accept it as-is, edit your prompt and retry, or upload
-                  your own file instead.
-                </p>
-
-                <ResultPreviewCard />
-
-                <div className="mt-4 flex flex-col gap-2">
-                  <Button
-                    variant="secondary"
-                    className="w-full border border-[var(--color-border)]"
-                    onClick={() => {
-                      /* todo: dev-only escalation view; accept = add layer from job result */
-                      handleClose();
-                    }}
-                  >
-                    Accept best attempt
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    className="w-full border border-[var(--color-border)]"
-                    onClick={() => {
-                      /* todo: reopen tier1 modal to edit prompt and retry */
-                      handleClose();
-                    }}
-                  >
-                    Edit prompt &amp; retry
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    className="w-full border border-[var(--color-border)]"
-                    onClick={() => {
-                      /* todo: B2 not configured; no manual upload endpoint wired */
-                    }}
-                  >
-                    Upload file instead
-                  </Button>
-                </div>
-              </>
-            )}
-          </>
+              <SheetTitle className="text-base">Starting…</SheetTitle>
+            </div>
+            <p className="text-sm text-[var(--color-text-muted)]">
+              No active generation job.
+            </p>
+          </div>
         )}
       </SheetContent>
     </Sheet>

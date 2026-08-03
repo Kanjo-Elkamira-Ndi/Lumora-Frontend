@@ -33,7 +33,19 @@ export function getJob(jobId: string) {
   return apiFetch<JobDto>(`/jobs/${jobId}`);
 }
 
-export type Tier1Kind = "voiceover" | "music" | "image";
+export type Tier1Kind = "voiceover" | "music" | "image" | "video";
+
+export type Tier0Kind = "caption" | "transition" | "cut_points" | "motion_spec";
+
+export function createAgenticJob(
+  projectId: string,
+  payload: { script: string; targetDuration?: number }
+) {
+  return apiFetch<AiJobResultDto>(`/ai/agentic`, {
+    method: "POST",
+    body: { projectId, ...payload },
+  });
+}
 
 export function createTier1Job(
   projectId: string,
@@ -50,6 +62,32 @@ export function createTier1Job(
     method: "POST",
     body: { projectId, ...payload },
   });
+}
+
+export function createTier0Job(
+  projectId: string,
+  jobType: Tier0Kind,
+  prompt: string
+) {
+  return apiFetch<JobDto>(`/jobs`, {
+    method: "POST",
+    body: { projectId, tier: 0, jobType, prompt },
+  });
+}
+
+export async function waitForJob(
+  jobId: string,
+  timeoutMs = 120000
+): Promise<JobDto> {
+  const started = Date.now();
+  for (;;) {
+    const job = await getJob(jobId);
+    if (job.status === "completed" || job.status === "failed") return job;
+    if (Date.now() - started > timeoutMs) {
+      throw new Error("Timed out waiting for the job");
+    }
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
 }
 
 export function createRenderJob(projectId: string, outputFormat: "mp4" | "webm") {

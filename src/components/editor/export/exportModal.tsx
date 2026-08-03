@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils/cn";
 
-type Format = "mp4" | "mov" | "gif";
+type Format = "mp4" | "webm";
 type Preset = "1080p" | "720p" | "4K";
 type Scale = "fit-width" | "fit-height" | "stretch";
 
@@ -23,9 +23,8 @@ const FORMATS: {
   sub?: string;
   badge?: string;
 }[] = [
-  { id: "mp4", label: "MP4", description: "Apple ProRes", sub: "H.264", badge: "Recommended" },
-  { id: "mov", label: "MOV", description: "Apple QuickTime" },
-  { id: "gif", label: "GIF", description: "Animated" },
+  { id: "mp4", label: "MP4", description: "H.264", sub: "MPEG-4", badge: "Recommended" },
+  { id: "webm", label: "WEBM", description: "VP9", sub: "WebM" },
 ];
 
 const PRESETS: {
@@ -63,7 +62,7 @@ export function ExportModal({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onExport: () => void;
+  onExport: (format: Format) => void;
 }) {
   const [format, setFormat] = useState<Format>("mp4");
   const [preset, setPreset] = useState<Preset>("1080p");
@@ -229,7 +228,7 @@ export function ExportModal({
 
         <div className="flex items-center justify-between border-t border-[var(--color-border)] px-6 py-4">
           <span className="text-xs text-[var(--color-text-muted)]">
-            Estimate · H.264 · 30 fps
+            {format === "webm" ? "VP9" : "H.264"} · 30 fps
           </span>
           <div className="flex items-center gap-3">
             <Button
@@ -244,10 +243,10 @@ export function ExportModal({
               className="rounded-lg font-medium"
               onClick={() => {
                 onOpenChange(false);
-                onExport();
+                onExport(format);
               }}
             >
-              Export 2.2 GB
+              Export {format.toUpperCase()}
             </Button>
           </div>
         </div>

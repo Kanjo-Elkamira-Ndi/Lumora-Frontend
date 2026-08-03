@@ -47,3 +47,29 @@ export function getAssetManifest(assetId: string) {
     `/assets/${assetId}/manifest`
   );
 }
+
+export function updateAssetTags(assetId: string, tags: string[]) {
+  return apiFetch<AssetDto>(`/assets/${assetId}/tags`, {
+    method: "PATCH",
+    body: { tags },
+  });
+}
+
+export function deleteAsset(assetId: string) {
+  return apiFetch<void>(`/assets/${assetId}`, {
+    method: "DELETE",
+  });
+}
+
+export type WordTimingDto = {
+  word: string;
+  start: number;
+  end: number;
+};
+
+export function transcribeAsset(assetId: string) {
+  return apiFetch<{ assetId: string; words: WordTimingDto[] }>(`/transcribe`, {
+    method: "POST",
+    body: { assetId },
+  });
+}

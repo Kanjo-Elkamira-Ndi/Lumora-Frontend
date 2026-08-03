@@ -4,7 +4,7 @@ import type { Tier1Kind } from "@/lib/api/jobs";
 
 type ActiveJob = {
   jobId: string;
-  kind: Tier1Kind;
+  kind: Tier1Kind | "agentic";
 };
 
 type AiUiState = {

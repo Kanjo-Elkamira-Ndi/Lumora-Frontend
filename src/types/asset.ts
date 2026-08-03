@@ -13,4 +13,5 @@ export type Asset = {
   sizeBytes?: number
   createdAt?: string
   source?: AssetSource
+  tags?: string[]
 }

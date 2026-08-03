@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-import { listAssets } from "@/lib/api/assets";
+import { deleteAsset, listAssets, updateAssetTags } from "@/lib/api/assets";
 import { mapAsset } from "@/lib/api/mappers";
 import type { Asset } from "@/types";
 
@@ -15,6 +15,8 @@ type AssetState = {
   setSearchQuery: (query: string) => void;
   addImportedAsset: (asset: Asset) => void;
   loadAssets: (projectId: string) => Promise<void>;
+  setAssetTags: (assetId: string, tags: string[]) => Promise<void>;
+  removeAsset: (assetId: string) => Promise<void>;
 };
 
 export const useAssetStore = create<AssetState>((set) => ({
@@ -40,5 +42,21 @@ export const useAssetStore = create<AssetState>((set) => ({
         loading: false,
       });
     }
+  },
+  setAssetTags: async (assetId, tags) => {
+    set((state) => ({
+      assets: state.assets.map((a) =>
+        a.id === assetId ? { ...a, tags } : a
+      ),
+    }));
+    await updateAssetTags(assetId, tags);
+  },
+  removeAsset: async (assetId) => {
+    set((state) => ({
+      assets: state.assets.filter((a) => a.id !== assetId),
+      selectedAssetId:
+        state.selectedAssetId === assetId ? null : state.selectedAssetId,
+    }));
+    await deleteAsset(assetId);
   },
 }));

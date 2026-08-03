@@ -20,13 +20,13 @@ export function EditorTopbar() {
   const projectName = useEditorStore((s) => s.projectName);
   const [exportOpen, setExportOpen] = useState(false);
 
-  const handleExport = async () => {
+  const handleExport = async (format: "mp4" | "webm") => {
     if (!projectId) {
       toastError("No project selected");
       return;
     }
     try {
-      const job = await createRenderJob(projectId, "mp4");
+      const job = await createRenderJob(projectId, format);
       setRenderJobId(job.id);
       setProgressOpen(true);
     } catch (error) {

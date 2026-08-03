@@ -128,10 +128,8 @@ export function mapTimelineDetailToTimeline(dto: TimelineDetailDto): Timeline {
 
 export function layerToBackendParams(layer: Layer): Record<string, unknown> {
   const params: Record<string, unknown> = { ...(layer.props ?? {}) };
-  if (layer.type !== "video") {
-    params.startTime = layer.startMs / 1000;
-    params.duration = layer.durationMs / 1000;
-  }
+  params.startTime = layer.startMs / 1000;
+  params.duration = layer.durationMs / 1000;
   return params;
 }
 
@@ -170,6 +168,7 @@ export function mapAsset(dto: AssetDto): Asset {
     durationMs: dto.duration ? Math.round(dto.duration * 1000) : undefined,
     mimeType: dto.mimeType,
     source: dto.source === "ai" ? "ai-generated" : "upload",
+    tags: dto.tags ?? [],
   };
 }
 

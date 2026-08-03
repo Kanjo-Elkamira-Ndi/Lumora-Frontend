@@ -1,6 +1,6 @@
 # Lumora Frontend ↔ Backend Wiring Plan
 
-FastAPI backend at `~/Projects/Lumora` (`:8000`) · Next.js frontend at `~/Projects/lumora-frontend` (`:3000`).
+FastAPI backend at `~/Projects/Lumora` (`:8000`) · Next.js frontend at `~/Projects/lumora-frontend` (`:3002`).
 
 ## Status
 
@@ -129,7 +129,7 @@ Scope (confirmed with user): uploaded files only (AI-generated asset persistence
 ## Verification
 
 - Backend running (`uv run python main.py` on `:8000`; Redis/Celery optional until Part 6 — the app starts fine without it).
-- Frontend `npm run dev` on `:3000`.
+- Frontend `npm run dev` on `:3002` (NOT `:3000` — the hermes WhatsApp gateway's ~5 min bridge-reconnect loop kills whatever is bound to `:3000`; see `~/.hermes/logs/gateway.log` and `hermes-agent/gateway/platforms/whatsapp.py` `_kill_port_process`).
 - Drive flows via CDP (existing pattern): register/login → dashboard lists projects → create project → editor load (empty-timeline state proves the composite timeline path) → add/import asset → generate voiceover → WS progress → layer appears → export job → manifest drawer.
 - Typecheck + lint after each part.
 
