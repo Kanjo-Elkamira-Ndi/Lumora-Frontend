@@ -20,6 +20,7 @@ import { useEditorStore } from "@/stores/editorStore";
 import { useTimelineStore } from "@/stores/timelineStore";
 import type { Asset, AssetKind } from "@/types";
 import { AiAssistTab } from "@/components/editor/ai/aiAssistTab";
+import { TextTab } from "@/components/editor/assets/textTab";
 
 const TABS = [
   { id: "media", label: "Media" },
@@ -252,7 +253,7 @@ export function AssetLibraryPanel() {
         </div>
       )}
 
-      {activeTab === "text" && <EmptyTab label="Text overlays coming soon" />}
+      {activeTab === "text" && <TextTab />}
       {activeTab === "audio" && <EmptyTab label="Audio browser coming soon" />}
       {activeTab === "ai-assist" && <AiAssistTab />}
     </aside>
