@@ -21,6 +21,7 @@ import { useTimelineStore } from "@/stores/timelineStore";
 import type { Asset, AssetKind } from "@/types";
 import { AiAssistTab } from "@/components/editor/ai/aiAssistTab";
 import { TextTab } from "@/components/editor/assets/textTab";
+import { AudioTab } from "@/components/editor/assets/audioTab";
 
 const TABS = [
   { id: "media", label: "Media" },
@@ -53,14 +54,6 @@ function formatDuration(durationMs?: number) {
   if (!durationMs) return "0:00";
   const s = Math.round(durationMs / 1000);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
-}
-
-function EmptyTab({ label }: { label: string }) {
-  return (
-    <div className="flex flex-1 items-center justify-center p-6">
-      <p className="text-sm text-[var(--color-text-muted)]">{label}</p>
-    </div>
-  );
 }
 
 export function AssetLibraryPanel() {
@@ -254,7 +247,7 @@ export function AssetLibraryPanel() {
       )}
 
       {activeTab === "text" && <TextTab />}
-      {activeTab === "audio" && <EmptyTab label="Audio browser coming soon" />}
+      {activeTab === "audio" && <AudioTab />}
       {activeTab === "ai-assist" && <AiAssistTab />}
     </aside>
   );
