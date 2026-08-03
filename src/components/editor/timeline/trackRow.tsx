@@ -1,5 +1,7 @@
 "use client";
 
+import { Film, Music, Sparkles, Type, type LucideIcon } from "lucide-react";
+
 import { cn } from "@/lib/utils/cn";
 import type { Layer, Track } from "@/types";
 import { LayerChip } from "./layerChip";
