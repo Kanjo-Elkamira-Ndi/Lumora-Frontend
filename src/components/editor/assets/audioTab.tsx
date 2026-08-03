@@ -138,9 +138,10 @@ export function AudioTab() {
             name: file.name,
             kind: "audio",
             url: "",
-            durationMs: created.duration
-              ? Math.round(created.duration * 1000)
-              : undefined,
+            durationMs:
+              created.duration == null
+                ? undefined
+                : Math.round(created.duration * 1000),
             mimeType: created.mimeType,
             source: "upload",
           });
@@ -201,11 +202,12 @@ export function AudioTab() {
           <input
             ref={fileInputRef}
             type="file"
+            multiple
             accept="audio/*"
             className="hidden"
             onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void importFiles([file]);
+              const files = Array.from(e.target.files ?? []);
+              if (files.length > 0) void importFiles(files);
               e.target.value = "";
             }}
           />
